@@ -1,0 +1,444 @@
+use GAMeRdb
+
+db.REFERENCE.insert({
+ReferenceID : ,
+ZIPpath : ,
+Phylogeny : {
+	Genus : ,
+	Species : ,
+	Subspecies : ,
+	Serovar : ,
+	ClonalComplex : ,
+}
+})
+
+
+db.REFERENCE.insert({
+ReferenceID : "Typhimurium_LT2",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Typhimurium_LT2_AE006468.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Typhimurium"
+}
+})
+
+
+db.REFERENCE.insert({
+ReferenceID : "Abaetetuba_ATCC_35640",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Abaetetuba_ATCC_35640.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Abaetetuba"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Abony_0014",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Abony_0014.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Abony"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Agona_24249",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Agona_24249.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Agona"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Anatum_ATCC-BAA-1592",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Anatum_ATCC-BAA-1592.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Anatum"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Bareilly_CFSAN000189",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Bareilly_CFSAN000189.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Bareilly"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Bovismorbificans_HF969015",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Bovismorbificans_HF969015.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Bovismorbificans"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Bredeney_CFSAN001080",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Bredeney_CFSAN001080.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Bredeney"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Choleraesuis_SC-B67",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Choleraesuis_SC-B67.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Choleraesuis"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Cubana_CFSAN002050",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Cubana_CFSAN002050.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Cubana"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Dublin_CT_02021853",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Dublin_CT_02021853.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Dublin"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Enteritidis_EC20090193",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Enteritidis_EC20090193.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Enteritidis"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Enteritidis_P125109",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Enteritidis_P125109.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Enteritidis"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Gallinarum_287-91",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Gallinarum_287-91.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Gallinarum"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Heidelberg_CFSAN002064",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Heidelberg_CFSAN002064.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Heidelberg"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Infantis_1326-28",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Infantis_1326-28.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Infantis"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Javiana_CFSAN001992",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Javiana_CFSAN001992.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Javiana"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Kentucky_CVM29188",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Kentucky_CVM29188.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Kentucky"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Montevideo_507440-20",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Montevideo_507440-20.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Montevideo"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Newport_USMARC-S3124",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Newport_USMARC-S3124.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "Newport"
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "ParatyphiA_AKU-12601",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/ParatyphiA_AKU-12601.zip",
+Phylogeny : {
+	Genus : "Salmonella",
+	Species : "enterica",
+	Subspecies : "enterica",
+	Serovar : "ParatyphiA"
+}
+})
+
+
+db.REFERENCE.insert({
+ReferenceID : "10403S",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/10403S.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "7",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "6179",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/6179.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "121",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "88-0478",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/88-0478.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "8",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Clip80459",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/Clip80459.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "4",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "EGD-e",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/EGD-e.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "9",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "EGD",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/EGD.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "7",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "F2365",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/F2365.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "1",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "Finland_1998",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/Finland_1998.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "155",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "HCC23",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/HCC23.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "69",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "J0161",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/J0161.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "11",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "J1-220",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/J1-220.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "2",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "J1816",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/J1816.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "6",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "J2-031",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/J2-031.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "361",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "J2-064",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/J2-064.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "5",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "R2-502",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/R2-502.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "3",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "SLCC2376",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/SLCC2376.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "131",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "SLCC2479",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/SLCC2479.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "9",
+}
+})
+
+db.REFERENCE.insert({
+ReferenceID : "SLCC7179",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/SLCC7179.zip",
+Phylogeny : {
+	Genus : "Listeria",
+	Species : "monocytogenes",
+	ClonalComplex : "14",
+}
+})
+
+
+
+
+
+db.REFERENCE.insert({
+ReferenceID : "Staphylococcus_aureus_NC_007795",
+ZIPpath : "/mnt/NAS/NASBIO1/DATA/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip",
+Phylogeny : {
+	Genus : "Staphylococcus",
+	Species : "aureus",
+	ClonalComplex : "8",
+}
+})
+
+
+

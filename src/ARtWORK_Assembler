@@ -1,0 +1,307 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-1 -*-
+import os, sys
+import subprocess 
+import datetime
+import time
+import argparse
+import glob	
+import shutil
+#from os.path import exists
+import pymongo
+#from pymongo import MongoClient
+from bson.objectid import ObjectId
+from shutil import copyfile
+import smtplib	#mail
+from Bio import SeqIO
+
+
+__doc__="""
+
+"""
+
+def get_parser():
+	"""
+	Parse arguments
+	@return: arguments list
+	@rtype: parser object
+	"""
+
+	parser = argparse.ArgumentParser(description='')
+
+	parser.add_argument('-1', action="store", dest='reads1',
+						type=str, required=True, help='Fastq file pair 1 with \'_R1\' (REQUIRED)')
+
+	parser.add_argument('-2', action="store", dest='reads2',
+						type=str, required=True, help='Fastq file pair 2 with \'_R2\' (REQUIRED)')
+
+	parser.add_argument('-ref', action="store", dest='reference',
+						type=str, required=True, help='reference file FASTA(REQUIRED)')
+
+	parser.add_argument('-a', action="store", dest='adaptaters', 
+						type=str, required=True, default=None, help='adaptaters FASTA file (REQUIRED)')
+
+	parser.add_argument('-r', action="store", dest='readsLen',
+						type=str, default="150" , help='reads length (default:150)')
+
+	parser.add_argument('-l', action="store", dest='minContigLen',
+						type=int, default=200, help='minimum length for contig (default:200)')
+
+	parser.add_argument('-T', action="store", dest='nbThreads', 
+						type=str, default='1', help='maximum number of threads to use (default:1)')
+
+	parser.add_argument('-m', action="store", dest='maxMemory', 
+						type=int, default='4000', help='max memory to use in Mb (default:4000)')
+
+
+	return parser
+
+
+
+def soft_trimming(reads1, reads2, adaptaters, nbThreads, Gid): #remove contaminants and trim reads by quality
+
+	##################################################
+	## Map the reads and generate its quality stats ##
+	##################################################
+
+	forward_paired = Gid + "_paired_R1.fq.gz"
+	forward_unpaired = Gid + "_unpaired_R1.fq.gz"
+	reverse_paired = Gid + "_paired_R2.fq.gz"
+	reverse_unpaired = Gid + "_unpaired_R2.fq.gz"
+
+	command = "java -Xmx4g -jar /opt/Trimmomatic/0.33/trimmomatic-0.33.jar PE -threads " + \
+	nbThreads + " -phred33 " + reads1 + " " + reads2 + " " + forward_paired + " " + \
+	forward_unpaired + " " + reverse_paired + " " + reverse_unpaired + \
+	" ILLUMINACLIP:" + adaptaters + ":2:20:15 " + \
+	"TRAILING:20 MINLEN:50 "
+
+	os.system(command)
+
+	os.remove(forward_unpaired)
+	os.remove(reverse_unpaired)
+
+	os.system("gunzip " + forward_paired)
+	os.system("gunzip " + reverse_paired)
+
+	forward_paired = Gid + "_paired_R1.fq"
+	reverse_paired = Gid + "_paired_R2.fq"
+	list_reads_trim = [forward_paired, reverse_paired]
+
+	#remove old non-trimmed reads
+	return list_reads_trim
+
+
+def Assembly(reads1,reads2,cwd): # make de novo assembly from pair-end reads
+
+	AssemblyDeNovopath="Assembly"
+	
+	os.system("spades --careful " + \
+	"-1 " + reads1+ " " + \
+	"-2 " + reads2+ " " + \
+	"--phred-offset 33 " + \
+	"-o " + AssemblyDeNovopath)
+	
+	copyfile(AssemblyDeNovopath+"/contigs.fasta",cwd+"/contigs.fasta")
+	copyfile(AssemblyDeNovopath+"/scaffolds.fasta",cwd+"/scaffolds.fasta")
+
+	#remove temporary files
+	shutil.rmtree(AssemblyDeNovopath)
+	
+	return "contigs.fasta"
+
+
+def Assembly_control(AssemblyDeNovo, reference,cwd, id):
+
+	quast_html_file= cwd + "/QUAST/" + id
+
+	os.system("quast " + \
+	" -R " + reference + ' ' + \
+	AssemblyDeNovo + \
+	" -o " + quast_html_file)
+
+	return quast_html_file
+
+
+def TrimContigsByLen(denovo_fasta_file, min_length):
+
+    # Create our hash table to add the sequences
+    sequences={}
+    # Using the Biopython fasta parse we can read our fasta input
+    for seq_record in SeqIO.parse(denovo_fasta_file, "fasta"):
+        # Take the current sequence
+        sequence = str(seq_record.seq).upper()
+        # Check if the current sequence is according to the user parameters
+        if (len(sequence) >= min_length):
+            sequences[sequence] = seq_record.id
+    # Write the clean sequences
+
+    # Create a file in the same directory where you ran this script
+    trimmedcontigs = open(denovo_fasta_file + "_trimmed.fasta", "w+")
+    # Just read the hash table and write on the file as a fasta format
+    for sequence in sequences:
+            trimmedcontigs.write(">" + sequences[sequence] + "\n" + sequence + "\n")
+    trimmedcontigs.close()
+    
+    return denovo_fasta_file + "_trimmed.fasta"
+
+
+def scaffolding(contigs_file, reference, Gid): 
+
+	scaffold_file = Gid + "_scaffold.fasta"
+
+	cmd = "java -Xmx4g -jar /opt/medusa/1.0/medusa.jar -d -w2 -scriptPath /opt/medusa/1.0/medusa_scripts " + \
+		" -i " + contigs_file + " -o " + scaffold_file + " -f " + reference
+
+	print cmd
+	os.system(cmd)	
+
+	return scaffold_file
+
+
+
+def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen):
+
+	cmd = "gmcloser -t " + scaffold + " -q " + contigs + " -l " + readsLen + \
+	" -p gmclos -r " + read1 + " " + read2 + " -n " + nbThreads
+
+	os.system(cmd)	
+
+	CloseGapsFile = Gid + "_scaffold_closed.fasta"
+	os.system("mv gmclos.gapclosed.fa " + CloseGapsFile)
+	os.system("rm -r gmclos*")	
+
+	return CloseGapsFile
+
+
+def rename_contig(fasta_file, genome_id):
+
+	fasta = open(fasta_file, 'r')
+	fasta_lines = fasta.readlines()
+	fasta.close()
+
+	rename_fastaFile_name = genome_id + "_assembly.fasta"
+	rename_fastaFile = open(rename_fastaFile_name, 'w')
+
+	i = 1
+	for line in fasta_lines :
+		if line[0] == '>':
+			rename_fastaFile.write('>' + genome_id + '_' + str(i) + '\n')
+			i+=1
+		else :
+			j = 1
+			for n in line :
+
+				if j%70==0 :
+					rename_fastaFile.write('\n')
+			
+				rename_fastaFile.write(n)
+			
+				j+=1	
+
+	rename_fastaFile.close()
+	
+	return rename_fastaFile_name		
+	
+
+
+#main function	
+def main():	
+
+
+	##########################################
+	#				checking				 #
+	##########################################
+
+	#execution time
+	t0 = time.time()
+	
+	#Get arguments 
+	parser=get_parser()
+	
+	#print parser.help if no arguments
+	if len(sys.argv)==1:
+		parser.print_help()
+		sys.exit(1)
+	
+	Arguments=parser.parse_args()	
+
+	cwd = os.getcwd() #current directory
+	GENOME_ID = ''.join(Arguments.reads1.split('_')[0:-1])
+	GENOME_ID = GENOME_ID.split('/')[-1]
+
+	os.system("mkdir REF")
+	os.system("cp " + Arguments.reference + " REF/.")
+	refDirectory = "REF/"
+
+
+	print "Step 1/7 ---> Trimming"
+
+	reads_trim = soft_trimming(Arguments.reads1, Arguments.reads2, Arguments.adaptaters, Arguments.nbThreads, GENOME_ID)
+	
+	reads1_trim = reads_trim[0]
+	reads2_trim = reads_trim[1]
+
+
+	##########################################
+	#	       Assembly de novo	        	 #
+	##########################################	
+
+	print "Step 2/7 ---> Assembly"
+
+	CONTIGS = Assembly(reads1_trim,reads2_trim,cwd)
+
+	##########################################
+	#	           scaffolding   	         #
+	##########################################
+
+	print "Step 3/7 ---> Scaffolding"
+
+	scaffold = scaffolding(CONTIGS, refDirectory, GENOME_ID)
+
+
+	##########################################
+	#	          Gap Closing	             #
+	##########################################	
+
+	print "Step 4/7 ---> Gap closing"
+
+	scaffold = CloseGaps(scaffold, CONTIGS, reads1_trim, reads2_trim, Arguments.nbThreads, GENOME_ID, Arguments.readsLen)
+
+
+	##########################################
+	#	           contig filter      	 	 #
+	##########################################
+
+	print "Step 5/7 ---> contig filter"
+
+	scaffold = TrimContigsByLen(scaffold, Arguments.minContigLen)
+
+
+	##########################################
+	#	      QUAST quality control     	 #
+	##########################################
+
+	print "Step 6/7 ---> Assembly control"
+
+	QUAST_HTML=Assembly_control(scaffold,Arguments.reference, cwd, GENOME_ID)
+
+	
+	##########################################
+	#	         rename contigs            	 #
+	##########################################
+
+	print "Step 7/7 ---> Rename scaffold"
+
+	ASSEMBLY = rename_contig(scaffold, GENOME_ID)
+
+
+	os.system("mv " + CONTIGS + " " + GENOME_ID + "_contigs.fasta")
+	os.system("rm " + GENOME_ID + "_scaffold*")
+	os.system("rm -r temp REF *_paired*.fq scaffolds.fasta contigs.fasta* " )
+
+
+	print "FINISH!"
+
+
+if __name__ == "__main__":
+	main()	        		
