@@ -1087,7 +1087,7 @@ def get_scaffolding_reference(genus, MLST_id,logFilepath, report):
 	return reference_fasta,fasta_ref_path,reference_gff.rstrip()
 
 
-def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen, logFilepath):
+def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen, logFilepath, report):
 
 	os.system('echo "\n************************** CLOSING GAPS : START **************************\n" >> '+ logFilepath)
 
@@ -1119,12 +1119,13 @@ def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen, logFile
 	if os.path.isfile("gmclos.gapclosed.fa"):
 		#rename gapclosed output file
 		os.system("mv gmclos.gapclosed.fa " + CloseGapsFile)
-		flag = True
 
 	else :
 		os.system('echo "ERROR GMcloser no result"  ')	
 		CloseGapsFile = scaffold
-		flag = False
+		rep = open(report, 'a')
+		rep.write("\nERROR GMcloser --> step skipping\n")
+		rep.close()
 
 
 	###################
@@ -1132,7 +1133,7 @@ def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen, logFile
 	os.system("rm -r gmclos*")	
 
 	os.system('echo "\n************************** CLOSING GAPS : END **************************\n" >> '+ logFilepath)
-	return CloseGapsFile, flag
+	return CloseGapsFile
 
 
 def rename_contig(fasta_file, genome_id,logFilepath):
@@ -1429,11 +1430,7 @@ def main():
 	print "Step 11/17 ---> Gap closing"
 
 	readsLen = get_len(str(fastqc_txtreport))
-	scaffold,flag = CloseGaps(scaffold, CONTIGS, reads1_trim, reads2_trim, Arguments.nbThreads, GENOME_ID, readsLen, LOG_FILE)
-
-	if not flag :
-		report = open(REPORT_FILE, 'a')
-		report.write("\nERROR GMcloser --> skip gap closing step\n")
+	scaffold = CloseGaps(scaffold, CONTIGS, reads1_trim, reads2_trim, Arguments.nbThreads, GENOME_ID, readsLen, LOG_FILE, REPORT_FILE)
 
 	##########################################
 	#	         Contig filtration     	 	 #
