@@ -1103,8 +1103,8 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
 	os.system("mkdir mash_genome_db")
 	os.mkdir("reference_scaffolding")
 	os.system("cp /mnt/NAS/NASBIO1/DATA/REFERENCES/" + genus + "/*zip mash_genome_db/.")
-	os.system("unzip \'mash_genome_db/*.zip\' \'*.fasta\'")
-	os.system("unzip \'mash_genome_db/*.zip\' \'*.gff3\'")
+	os.system("unzip \'mash_genome_db/*.zip\' \'*.fasta\' -d mash_genome_db/")
+	os.system("unzip \'mash_genome_db/*.zip\' \'*.gff3\' -d mash_genome_db/")
 	os.system("rm mash_genome_db/*zip mash_genome_db/*_prot.fasta")
 
 	list_FASTA = os.listdir('mash_genome_db/')
