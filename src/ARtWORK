@@ -1459,7 +1459,7 @@ def main():
 
 	print "Step 9/17 ---> MLST"
 
-	if(Arguments.genus != Clostridium):
+	if(Arguments.genus != "Clostridium"):
 		MLST_result = MSLT_analysis(CONTIGS, Arguments.nbThreads, LOG_FILE, REPORT_FILE, Arguments.genus)
 		RESULT_ST = MLST_result[0]
 
