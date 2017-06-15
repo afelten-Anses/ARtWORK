@@ -38,7 +38,7 @@ def get_parser():
 						type=str, required=True, help='Fastq file pair 2 with \'_R2\' (REQUIRED)')
 
 	parser.add_argument('-g', action="store", dest='genus',
-						type=str, required=True, help='genus Salmonella/Listeria/Staphylococcus (REQUIRED)')
+						type=str, required=True, help='genus Salmonella/Listeria/Staphylococcus/Clostridium (REQUIRED)')
 
 	parser.add_argument('-s', action="store", dest='species',
 						type=str, required=True, help='species (REQUIRED)')
@@ -203,10 +203,12 @@ class sample(object) :
 			},
 			"Phylogeny":{
 				"Genus":self.genus,
-				"Species":self.species,
-				"SequenceType":self.ST,
+				"Species":self.species
 			}
 		}
+
+		if self.genus != "Clostridium" :
+			document["Phylogeny"]["SequenceType"] = self.ST
 
 		if self.genus == "Salmonella" :
 			document["Phylogeny"]["Serovar"] = self.serovar
@@ -615,6 +617,12 @@ def get_default_reference(genus,workdir,logFilepath):
 		#unzip in current working directory with -d and junk paths with -j
 		os.system("unzip -o -j /mnt/NAS/NASBIO1/DATA/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
 	
+	elif(genus == "Clostridium"):
+		#retrieving reference filename
+		reference_filename = "CP000246.fasta" #need to be updated if reference path changes
+		#unzip in current working directory with -d and junk paths with -j
+		os.system("unzip -o -j /mnt/NAS/NASBIO1/DATA/REFERENCES/Clostridium/CP000246.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes	
+
 	else:	
 		logFile = open(logFilepath, "a")
 		logFile.write("ERROR: no reference for " + genus)
@@ -924,7 +932,7 @@ def Assembly(reads1,reads2,cwd,logFilepath,nbThreads): #Perform de novo assembly
 	return cwd + "/contigs.fasta"
 
 
-def Assembly_control(AssemblyDeNovo, referencepath, MLST_id, minContig, GFF, cwd, logFilepath, nbThreads):
+def Assembly_control(AssemblyDeNovo, referencepath, minContig, GFF, cwd, logFilepath, nbThreads):
 
 	os.system('echo "\n************************** ASSEMBLY CONTROL : START **************************\n" >> '+ logFilepath)
 	
@@ -1013,7 +1021,7 @@ def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory):
 
 	return scaffold_file	
 
-
+"""
 def get_scaffolding_reference(genus, MLST_id,logFilepath, report): 
 
 	logFile = open(logFilepath, "a")
@@ -1085,6 +1093,59 @@ def get_scaffolding_reference(genus, MLST_id,logFilepath, report):
 
 
 	return reference_fasta,fasta_ref_path,reference_gff.rstrip()
+"""
+
+def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
+
+	logFile = open(logFilepath, "a")
+	logFile.write("Get scaffolding reference with Mash...")
+
+	os.system("mkdir mash_genome_db")
+	os.mkdir("reference_scaffolding")
+	os.system("cp /mnt/NAS/NASBIO1/DATA/REFERENCES/" + genus + "*zip mash_genome_db/.")
+	os.system("unzip \'mash_genome_db/*.zip\' \'*.fasta\'")
+	os.system("unzip \'mash_genome_db/*.zip\' \'*.gff3\'")
+	os.system("rm mash_genome_db/*zip mash_genome_db/*_prot.fasta")
+
+	list_FASTA = os.listdir('mash_genome_db/')
+	listdir = " mash_genome_db/".join(list_FASTA)
+
+	os.system("mash sketch -o mash_genome_db/references mash_genome_db/" + listdir)
+
+	os.system("mash dist -p 38 mash_genome_db/references.msh " + assembly + \
+		" > mash_genome_db/mash_result.tsv")
+
+	os.system("cat mash_genome_db/mash_result.tsv >> " + logFilepath)
+
+	mash_resultFile = open("mash_genome_db/mash_result.tsv",'r')
+	lines = mash_resultFile.readlines()
+	mash_resultFile.close()
+
+	genome_ref = ""
+	minDist = 1.0
+
+	for line in lines :
+		
+		line = line.rstrip().split('\t')
+		genome = line[0]
+		dist = float(line[2])
+
+		if dist < minDist :
+			minDist = dist
+			genome_ref = genome
+
+
+	os.system("cp mash_genome_db/" + genome_ref + " reference_scaffolding/.")		
+	reference_fasta = "reference_scaffolding/" + genome_ref
+	reference_gff = "mash_genome_db/" + genome_ref.split('.')[0] + ".gff3"	
+
+	report_file = open(report, "a")
+	report_file.write("\nReference used for scaffolding : " + genome_ref + \
+		"(mash distance : " + str(minDist) + ")" + '\n')
+	report_file.close()
+
+
+	return reference_fasta,"reference_scaffolding/",reference_gff
 
 
 def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen, logFilepath, report):
@@ -1398,19 +1459,23 @@ def main():
 
 	print "Step 9/17 ---> MLST"
 
-	MLST_result = MSLT_analysis(CONTIGS, Arguments.nbThreads, LOG_FILE, REPORT_FILE, Arguments.genus)
-	RESULT_ST = MLST_result[0]
+	if(Arguments.genus != Clostridium):
+		MLST_result = MSLT_analysis(CONTIGS, Arguments.nbThreads, LOG_FILE, REPORT_FILE, Arguments.genus)
+		RESULT_ST = MLST_result[0]
 
-	if(Arguments.genus == "Salmonella"):
-		RESULT_SEROVAR = MLST_result[1]
-		MLST_id = RESULT_SEROVAR
+		if(Arguments.genus == "Salmonella"):
+			RESULT_SEROVAR = MLST_result[1]
+			MLST_id = RESULT_SEROVAR
 
-	elif(Arguments.genus == "Listeria"):
-		RESULT_CC = MLST_result[1]	
-		MLST_id = RESULT_CC
+		elif(Arguments.genus == "Listeria"):
+			RESULT_CC = MLST_result[1]	
+			MLST_id = RESULT_CC
 
-	elif(Arguments.genus == "Staphylococcus"):
-		MLST_id = RESULT_ST
+		elif(Arguments.genus == "Staphylococcus"):
+			MLST_id = RESULT_ST
+
+	else:
+		MLST_id = "0"	
 
 
 	##########################################
@@ -1419,7 +1484,8 @@ def main():
 
 	print "Step 10/17 ---> Scaffolding"
 
-	new_reference,new_reference_directory, GFFref = get_scaffolding_reference(Arguments.genus, MLST_id,LOG_FILE, REPORT_FILE)
+	#new_reference,new_reference_directory, GFFref = get_scaffolding_reference(Arguments.genus, MLST_id,LOG_FILE, REPORT_FILE)
+	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath)
 	scaffold = scaffolding(CONTIGS, new_reference_directory, GENOME_ID, LOG_FILE, Arguments.maxMemory)
 
 
@@ -1447,7 +1513,7 @@ def main():
 
 	print "Step 13/17 ---> Assembly control"
 
-	QUAST = Assembly_control(scaffold, new_reference,MLST_id,Arguments.minContigLen,GFFref,cwd,LOG_FILE,Arguments.nbThreads)
+	QUAST = Assembly_control(scaffold, new_reference,Arguments.minContigLen,GFFref,cwd,LOG_FILE,Arguments.nbThreads)
 	
 
 	##########################################
@@ -1499,7 +1565,8 @@ def main():
 
 	# Remove tmp files and directories
 	os.system("rm -r  " + GENOME_ID + "* temp reference_scaffolding Assembly \
-		fastqc contigs.fasta* scaffolds.fasta stats annotation trashReads.fastq reference_gff")
+		fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
+		reference_gff")
 
 
 if __name__ == "__main__":
