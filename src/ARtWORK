@@ -1485,7 +1485,7 @@ def main():
 	print "Step 10/17 ---> Scaffolding"
 
 	#new_reference,new_reference_directory, GFFref = get_scaffolding_reference(Arguments.genus, MLST_id,LOG_FILE, REPORT_FILE)
-	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath)
+	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(CONTIGS, Arguments.genus, REPORT_FILE, LOG_FILE)
 	scaffold = scaffolding(CONTIGS, new_reference_directory, GENOME_ID, LOG_FILE, Arguments.maxMemory)
 
 
