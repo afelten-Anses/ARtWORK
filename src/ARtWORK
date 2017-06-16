@@ -1143,7 +1143,7 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
 
 	report_file = open(report, "a")
 	report_file.write("\nReference used for scaffolding : " + genome_ref + \
-		"(mash distance : " + str(minDist) + ")" + '\n')
+		" (mash distance : " + str(minDist) + ")" + '\n')
 	report_file.close()
 
 
@@ -1478,6 +1478,7 @@ def main():
 
 	else:
 		MLST_id = "0"	
+		RESULT_ST = "0"
 
 
 	##########################################
