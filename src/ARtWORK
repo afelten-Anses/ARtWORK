@@ -1134,7 +1134,7 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
 
 		if dist < minDist :
 			minDist = dist
-			genome_ref = genome
+			genome_ref = genome.split('/')[-1]
 
 
 	os.system("cp mash_genome_db/" + genome_ref + " reference_scaffolding/.")		
