@@ -1102,14 +1102,16 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
 
 	os.system("mkdir mash_genome_db")
 	os.mkdir("reference_scaffolding")
+	os.mkdir("reference_gff")
 	os.system("cp /mnt/NAS/NASBIO1/DATA/REFERENCES/" + genus + "/*zip mash_genome_db/.")
 	os.system("unzip \'mash_genome_db/*.zip\' \'*.fasta\' -d mash_genome_db/")
-	os.system("unzip \'mash_genome_db/*.zip\' \'*.gff3\' -d mash_genome_db/")
+	os.system("unzip \'mash_genome_db/*.zip\' \'*.gff3\' -d reference_gff/")
 	os.system("rm mash_genome_db/*zip mash_genome_db/*_prot.fasta")
 
 	list_FASTA = os.listdir('mash_genome_db/')
 	listdir = " mash_genome_db/".join(list_FASTA)
 
+	print "mash sketch -o mash_genome_db/references mash_genome_db/" + listdir
 	os.system("mash sketch -o mash_genome_db/references mash_genome_db/" + listdir)
 
 	os.system("mash dist -p 38 mash_genome_db/references.msh " + assembly + \
@@ -1137,7 +1139,7 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
 
 	os.system("cp mash_genome_db/" + genome_ref + " reference_scaffolding/.")		
 	reference_fasta = "reference_scaffolding/" + genome_ref
-	reference_gff = "mash_genome_db/" + genome_ref.split('.')[0] + ".gff3"	
+	reference_gff = "reference_gff/" + genome_ref.split('.')[0] + ".gff3"	
 
 	report_file = open(report, "a")
 	report_file.write("\nReference used for scaffolding : " + genome_ref + \
