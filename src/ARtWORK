@@ -557,6 +557,7 @@ def Fastqc(reads1, reads2, adaptators, outputName, nbThreads, workdir, logFilepa
 
 	os.system('echo "\n************************** FASTQC REPORT : START **************************\n" >> '+ logFilepath)
 
+	shutil.rmtree(workdir + "/" + outputName) 
 	os.mkdir(workdir + "/" + outputName)
 	os.system('echo "FastQC started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
