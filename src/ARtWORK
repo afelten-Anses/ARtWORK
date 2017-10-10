@@ -556,7 +556,7 @@ def Fastqc(reads1, reads2, adaptators, outputName, nbThreads, workdir, logFilepa
 	#A mettre dans fichier REPORT : lien vers le report html
 
 	os.system('echo "\n************************** FASTQC REPORT : START **************************\n" >> '+ logFilepath)
- 
+
 	os.mkdir(workdir + "/" + outputName)
 	os.system('echo "FastQC started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
@@ -1237,7 +1237,7 @@ def annotation(fasta_file, genome_id, genus, nbThreads, logFilepath):
 
 	os.system('echo "\n************************** GENOME ANNOTATION : START **************************\n" >> '+ logFilepath)
 
-	cmd = "prokka --quiet --genus " + genus + " --prefix annotation" + \
+	cmd = "prokka --fast --genus " + genus + " --prefix annotation" + \
 	" -cpus " + str(nbThreads) + " " + fasta_file
 	cmd = cmd + " >> " + logFilepath + " 2>&1"
 
