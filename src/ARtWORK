@@ -317,7 +317,7 @@ def check_MongoDB_exist(GENOME_ID, genus, logFilepath):
 		message = "ERROR:" + GENOME_ID + " already exist in the database!!!"
 
 		#add msgerr in logFile
-		logFile = open(logFile, 'a') 
+		logFile = open(logFilepath, 'a') 
 		logFile.write(message + '\n')
 		logFile.close()
 		sys.exit(1)
@@ -556,8 +556,7 @@ def Fastqc(reads1, reads2, adaptators, outputName, nbThreads, workdir, logFilepa
 	#A mettre dans fichier REPORT : lien vers le report html
 
 	os.system('echo "\n************************** FASTQC REPORT : START **************************\n" >> '+ logFilepath)
-
-	shutil.rmtree(workdir + "/" + outputName) 
+ 
 	os.mkdir(workdir + "/" + outputName)
 	os.system('echo "FastQC started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
