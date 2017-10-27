@@ -64,6 +64,10 @@ def get_parser():
 	parser.add_argument('-w', action="store", dest='workdir', 
 						type=str, default='.', help='working directory (default:current directory)')
 
+	parser.add_argument('-a', action="store", dest='min_mapped_scaffold_percent', 
+						type=int, default=80, help='minimum percent of total scaffold length \
+						mapped on reference, used to detect contaminants (default:80)')
+
 	parser.add_argument('--supplier', action="store", dest='supplier', 
 						type=str, default='Anses', help='Supplier (default:Anses)')
 
@@ -301,8 +305,6 @@ def check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, logFilepath):
 	logFile.close()
 
 
-
-
 def check_MongoDB_exist(GENOME_ID, genus, logFilepath):
 	
 	logFile = open(logFilepath, "a")
@@ -415,7 +417,6 @@ def normalization(reads1, reads2, targetCov, nbThreads, Gid, logFilepath, report
 	
 	return reads1_normalized, reads2_normalized
     
-
 
 def Check_coverage(reads1,reads2,genus,minCov,nbThreads,maxMemory,workdir,logFilepath,reportFilepath):
     
@@ -641,7 +642,6 @@ def get_default_reference(genus,workdir,logFilepath):
 		logFile.close()
 		shutil.rmtree(str(workdir + "/reference_iVARCAll"))
 		sys.exit(1)
-
 
 
 def commande_iVARCAll(genus, reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir,logFilepath, report):
@@ -1265,6 +1265,61 @@ def get_len(fastqc_txt):
     return readslength
 
 	
+def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report, log):
+
+	fasta_dict = SeqIO.to_dict(SeqIO.parse(scaffold, "fasta"))
+	fasta_len_dict = {}
+	sum_scaffold_len = 0
+
+	for seq in fasta_dict :
+		scaffold_len = len(str(fasta_dict[seq]))
+		fasta_len_dict[seq] = scaffold_len
+		sum_scaffold_len += scaffold_len
+
+	tmp_sam_file = check_scaffold_coverage.sam	
+
+	os.system("bwa index " + reference)
+	os.system("bwa mem -t " + nbThreads + " " + reference + " " + scaffold + \
+		" > " + tmp_sam_file)	
+
+	os.system("rm " + reference + ".*")
+
+	sam_file = open(tmp_sam_file, 'r')
+	lines = sam_file.readlines()
+	sam_file.close()
+
+	sum_mapped_scaffold = 0
+
+	for line in lines :
+
+		if line[0] == '@' :
+			continue
+
+		scaffoldId = line.split('\t')[0]
+		sum_mapped_scaffold += fasta_len_dict[scaffoldId]
+
+	os.remove(tmp_sam_file)
+
+	mapped_percent = float(sum_mapped_scaffold) / float(sum_scaffold_len) * 100.0
+
+	if mapped_percent >= min_percent :
+		return
+
+	else :
+		logFile = open(log, 'a')
+		reportFile = open(report, 'a')
+		error = "ERROR : only " + str(mapped_percent) + " percent map on " + reference + " !!!"
+		logFile.write(error)
+		reportFile.write(error)
+		print error
+		logFile.close()
+		reportFileclose()
+
+		os.system("rm -r * temp reference_scaffolding Assembly \
+			fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
+			reference_gff")
+
+		sys.exit(1)
 
 
 #main function	
@@ -1516,7 +1571,8 @@ def main():
 
 	print "Step 13/17 ---> Assembly control"
 
-	QUAST = Assembly_control(scaffold, new_reference,Arguments.minContigLen,GFFref,cwd,LOG_FILE,Arguments.nbThreads)
+	check_scaffold_coverage(scaffold, new_reference, min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE)
+	QUAST = Assembly_control(scaffold, new_reference, Arguments.minContigLen, GFFref, cwd, LOG_FILE, Arguments.nbThreads)
 	
 
 	##########################################
