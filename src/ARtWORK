@@ -1279,7 +1279,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 	tmp_sam_file = "check_scaffold_coverage.sam"	
 
 	os.system("bwa index " + reference)
-	os.system("bwa mem -t " + nbThreads + " " + reference + " " + scaffold + \
+	os.system("bwa mem -t " + str(nbThreads) + " " + reference + " " + scaffold + \
 		" > " + tmp_sam_file)	
 
 	os.system("rm " + reference + ".*")
