@@ -1276,7 +1276,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 		fasta_len_dict[seq] = scaffold_len
 		sum_scaffold_len += scaffold_len
 
-	tmp_sam_file = check_scaffold_coverage.sam	
+	tmp_sam_file = "check_scaffold_coverage.sam"	
 
 	os.system("bwa index " + reference)
 	os.system("bwa mem -t " + nbThreads + " " + reference + " " + scaffold + \
