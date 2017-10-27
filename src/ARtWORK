@@ -1571,7 +1571,7 @@ def main():
 
 	print "Step 13/17 ---> Assembly control"
 
-	check_scaffold_coverage(scaffold, new_reference, min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE)
+	check_scaffold_coverage(scaffold, new_reference, Arguments.min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE)
 	QUAST = Assembly_control(scaffold, new_reference, Arguments.minContigLen, GFFref, cwd, LOG_FILE, Arguments.nbThreads)
 	
 
