@@ -68,6 +68,10 @@ def get_parser():
 						type=int, default=80, help='minimum percent of total scaffold length \
 						mapped on reference, used to detect contaminants (default:80)')
 
+	parser.add_argument('-d', action="store", dest='max_len_diff', 
+						type=int, default=30, help='maximum percent of length difference \
+						between assembly and reference (default:30)')
+
 	parser.add_argument('--supplier', action="store", dest='supplier', 
 						type=str, default='Anses', help='Supplier (default:Anses)')
 
@@ -1265,16 +1269,38 @@ def get_len(fastqc_txt):
     return readslength
 
 	
-def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report, log):
+def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, max_percent_diff):
 
 	fasta_dict = SeqIO.to_dict(SeqIO.parse(scaffold, "fasta"))
 	fasta_len_dict = {}
 	sum_scaffold_len = 0
 
 	for seq in fasta_dict :
-		scaffold_len = len(str(fasta_dict[seq]))
+		scaffold_len = len(str(fasta_dict[seq].seq))
 		fasta_len_dict[seq] = scaffold_len
 		sum_scaffold_len += scaffold_len
+
+	ref_dict = SeqIO.to_dict(SeqIO.parse(reference, "fasta"))
+	sum_reference_len = 0
+	for seq in ref_dict :
+		ref_len = len(str(ref_dict[seq].seq))
+		sum_reference_len += ref_len
+
+
+	diff_longer = float(sum_scaffold_len)/float(sum_reference_len) * 100
+	diff_longer_invert = float(sum_reference_len)/float(sum_scaffold_len) * 100
+
+	if (diff_longer > max_percent_diff) or (diff_longer_invert > max_percent_diff) :
+		error = "ERROR : assembly length too different from the reference length " + \
+		"(ref:" + str(sum_reference_len) + "pb | assembly:" + str(sum_scaffold_len) + "pb) !!!"
+		print error
+
+		os.system("rm -r * temp reference_scaffolding Assembly \
+			fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
+			reference_gff")
+
+		sys.exit(1)
+
 
 	tmp_sam_file = "check_scaffold_coverage.sam"	
 
@@ -1284,7 +1310,10 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 
 	os.system("rm " + reference + ".*")
 
-	sam_file = open(tmp_sam_file, 'r')
+	tmp_sam_file2 = "check_scaffold_coverage_mapped.sam"
+	os.system("samtools view -F 4 " + tmp_sam_file + " > " + tmp_sam_file2)
+
+	sam_file = open(tmp_sam_file2, 'r')
 	lines = sam_file.readlines()
 	sam_file.close()
 
@@ -1296,29 +1325,24 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 		if line[0] == '@' :
 			continue
 
-		scaffoldId = line.split('\t')[0]
+		scaffoldId = line.split('\t')[0]	
 
 		if scaffoldId not in scaffold_mapped_lit :
 			scaffold_mapped_lit.append(scaffoldId)
 			sum_mapped_scaffold += fasta_len_dict[scaffoldId]
 
 	os.remove(tmp_sam_file)
-
+	os.remove(tmp_sam_file2)
+	print sum_mapped_scaffold
+	print sum_scaffold_len
 	mapped_percent = float(sum_mapped_scaffold) / float(sum_scaffold_len) * 100.0
 
 	if mapped_percent >= min_percent :
-		print "----------------->" + str(mapped_percent) + " percent map on " + reference + " !!!"
 		return
 
 	else :
-		logFile = open(log, 'a')
-		reportFile = open(report, 'a')
 		error = "ERROR : only " + str(mapped_percent) + " percent map on " + reference + " !!!"
-		logFile.write(error)
-		reportFile.write(error)
 		print error
-		logFile.close()
-		reportFileclose()
 
 		os.system("rm -r * temp reference_scaffolding Assembly \
 			fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
@@ -1576,7 +1600,7 @@ def main():
 
 	print "Step 13/17 ---> Assembly control"
 
-	check_scaffold_coverage(scaffold, new_reference, Arguments.min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE)
+	check_scaffold_coverage(scaffold, new_reference, Arguments.min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE, Arguments.max_len_diff)
 	QUAST = Assembly_control(scaffold, new_reference, Arguments.minContigLen, GFFref, cwd, LOG_FILE, Arguments.nbThreads)
 	
 
