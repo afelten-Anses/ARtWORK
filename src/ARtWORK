@@ -1289,6 +1289,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 	sam_file.close()
 
 	sum_mapped_scaffold = 0
+	scaffold_mapped_lit = []
 
 	for line in lines :
 
@@ -1296,13 +1297,17 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 			continue
 
 		scaffoldId = line.split('\t')[0]
-		sum_mapped_scaffold += fasta_len_dict[scaffoldId]
+
+		if scaffoldId not in scaffold_mapped_lit :
+			scaffold_mapped_lit.append(scaffoldId)
+			sum_mapped_scaffold += fasta_len_dict[scaffoldId]
 
 	os.remove(tmp_sam_file)
 
 	mapped_percent = float(sum_mapped_scaffold) / float(sum_scaffold_len) * 100.0
 
 	if mapped_percent >= min_percent :
+		print "----------------->" + str(mapped_percent) + " percent map on " + reference + " !!!"
 		return
 
 	else :
