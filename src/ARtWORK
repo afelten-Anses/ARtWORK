@@ -1301,7 +1301,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 		logFile.close()
 		reportFile.close()
 
-		os.system("rm -r * temp reference_scaffolding Assembly \
+		os.system("rm -r temp reference_scaffolding Assembly \
 			fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
 			reference_gff")
 
@@ -1356,7 +1356,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 		logFile.close()
 		reportFile.close()
 
-		os.system("rm -r * temp reference_scaffolding Assembly \
+		os.system("rm -r temp reference_scaffolding Assembly \
 			fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
 			reference_gff")
 
