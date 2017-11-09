@@ -1287,10 +1287,9 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 		sum_reference_len += ref_len
 
 
-	diff_longer = float(sum_scaffold_len)/float(sum_reference_len) * 100
-	diff_longer_invert = float(sum_reference_len)/float(sum_scaffold_len) * 100
+	diff_longer = abs(100 - (float(sum_scaffold_len)/float(sum_reference_len) * 100))
 
-	if (diff_longer > max_percent_diff) or (diff_longer_invert > max_percent_diff) :
+	if (diff_longer > max_percent_diff) :
 		logFile = open(log, 'a')
 		reportFile = open(report, 'a')
 		error = "ERROR : assembly length too different from the reference length " + \
