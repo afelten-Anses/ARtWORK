@@ -1,0 +1,1189 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-1 -*-
+import os, sys
+import subprocess 
+import datetime
+import time
+import argparse
+import glob
+from pyunpack import Archive 	
+import shutil
+from shutil import copyfile
+import smtplib
+from Bio import SeqIO
+import patoolib
+
+
+__doc__="""
+
+"""
+
+def get_parser():
+	"""
+	Parse arguments
+	@return: arguments list
+	@rtype: parser object
+	"""
+
+	parser = argparse.ArgumentParser(description='run reads analysis, variant analysis, assembly and annotation \
+		from raw reads and add outputs in the GAMeR database')
+
+	parser.add_argument('-1', action="store", dest='reads1',
+						type=str, required=True, help='Fastq file pair 1 with \'_R1\' (REQUIRED)')
+
+	parser.add_argument('-2', action="store", dest='reads2',
+						type=str, required=True, help='Fastq file pair 2 with \'_R2\' (REQUIRED)')
+
+	parser.add_argument('-minCov', action="store", dest='minCov',
+						type=int, default=30, help='minimum coverage required for workflow (default:30)')
+
+	parser.add_argument('-targetCov', action="store", dest='targetCov',
+						type=int, default=100, help='minimum coverage required for normalization, 0 for no normalization (default:100)')
+
+	parser.add_argument('-r1', action="store", dest='RefVariant',
+						type=str, required=True, help='reference used for variant calling (REQUIRED)')
+
+	parser.add_argument('-r2', action="store", dest='RefScaffold',
+						type=str, required=True, help='reference used for scaffolding (REQUIRED)')
+
+	parser.add_argument('-l', action="store", dest='minContigLen',
+						type=int, default=200, help='minimum contig length (default:200)')
+
+	parser.add_argument('-p', action="store", dest='minPhredScore',
+						type=int, default=30, help='minimum phred score (default:30)')
+
+	parser.add_argument('-T', action="store", dest='nbThreads', 
+						type=int, default=1, help='maximum number of threads to use (default:1)')
+
+	parser.add_argument('-m', action="store", dest='maxMemory', 
+						type=int, default=4000, help='max memory to use in Mb (default:4000)')
+
+	parser.add_argument('-w', action="store", dest='workdir', 
+						type=str, default='.', help='working directory (default:current directory)')
+
+	parser.add_argument('-a', action="store", dest='min_mapped_scaffold_percent', 
+						type=int, default=80, help='minimum percent of total scaffold length \
+						mapped on reference, used to detect contaminants (default:80)')
+
+	parser.add_argument('-d', action="store", dest='max_len_diff', 
+						type=int, default=30, help='maximum percent of length difference \
+						between assembly and reference (default:20)')
+
+	return parser
+
+
+
+class sample(object) :
+
+
+	def __init__(self, SampleID, report, \
+		reads1Path, reads2Path, readsLen, reads1QC, reads2QC, \
+		assembly, contigs, QUAST, GBK, GFF, \
+		VCF):
+		"""
+		Initialize the sample class
+		"""
+
+		self.id = SampleID	
+		self.report = report
+
+		self.nbReads = number_of_reads(reads1Path)
+		self.reads1 = self.compressReads(reads1Path)
+		self.reads2 = self.compressReads(reads2Path)
+		self.readsLen = readsLen
+		self.reads1QC = reads1QC
+		self.reads2QC = reads2QC
+		self.VCF = VCF
+
+		self.assembly = assembly
+		self.contigs = contigs
+		self.QUAST = QUAST
+		self.GBK = GBK
+		self.GFF = GFF
+
+
+	def moveFiles(self, FINAL_OUTPUT_DIRECTORY):
+
+		os.system("mv " + self.report + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+		
+		os.system("mv " + self.reads1 + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.reads2 + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.reads1QC + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.reads2QC + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.assembly + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.contigs + ' ' + FINAL_OUTPUT_DIRECTORY + "/" + self.id + "_contigs.fasta")
+
+		os.system("mv " + self.QUAST + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.GBK + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.GFF + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+		os.system("mv " + self.VCF + '* ' + FINAL_OUTPUT_DIRECTORY + "/.")
+
+
+	def compressReads(self, reads):	
+
+		if reads.split('.')[-1] != "gz" :
+			os.system("pigz " + reads)
+			reads = reads + ".gz"
+
+		return reads	
+
+
+def Get_maxMemoryg(maxMemory):
+
+    #1go to 10go RAM conversion
+    if(int(maxMemory) >= 1000 and int(maxMemory) < 10000):
+        maxMemoryg = "-Xmx" + list(str(maxMemory))[0] + "g"
+
+    #10go to 100go RAM conversion
+    elif(int(maxMemory) >= 10000 and int(maxMemory) < 100000):
+        maxMemoryg = "-Xmx" + str(list(str(maxMemory))[0] + list(str(maxMemory))[1]) + "g"
+
+    #100go to 1000go RAM conversion
+    elif(int(maxMemory) >= 100000 and int(maxMemory) < 1000000):
+        maxMemoryg = "-Xmx" + str(list(str(maxMemory))[0] + list(str(maxMemory))[1] + list(str(maxMemory))[2]) + "g"
+
+    #1To to 10To RAM conversion
+    elif(int(maxMemory) >= 1000000 and int(maxMemory) < 10000000):
+        maxMemoryg ="-Xmx" + str(list(str(maxMemory))[0] + list(str(maxMemory))[1] + list(str(maxMemory))[2] + list(str(maxMemory))[3]) + "g"
+
+    #1go is the minimum requierement to be able to some tools, so if arguments.nbThreads<1go, enter Arguments.nbThreads converted defaut value
+    else:
+        maxMemoryg="-Xmx4g"
+        
+    return maxMemoryg
+	
+
+def check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, logFilepath):
+	
+	logFile = open(logFilepath, "a")
+	logFile.write("Check if final directory exists...")
+
+	if(os.path.isdir(FINAL_OUTPUT_DIRECTORY) ==True):
+
+		Gid = FINAL_OUTPUT_DIRECTORY.split('/')[-1]
+		message = "ERROR:" + Gid + " already exist in " + FINAL_OUTPUT_DIRECTORY 
+
+		#add msgerr in logFile
+		logFile = open(logFilepath, 'a')
+		logFile.write(message + '\n') 
+		logFile.close()
+		sys.exit(1)
+
+	logFile.write("...ok\n")
+	logFile.close()
+
+
+def uncompress_in_workdir(CompressedRead,logFilepath,workdir):
+
+
+	################################################################
+	## Extract reads_filename and file path from compressed file  ##
+	################################################################
+
+	os.system('echo "\n************************** READS UNPACKING : START **************************\n" >> '+ logFilepath)
+
+	#File found
+	if(os.path.exists(CompressedRead)):
+
+		reads_filename = '.'.join(CompressedRead.split('.')[0:2])
+		reads_filename = reads_filename.split('/')[-1]
+		reads_filepath = workdir + '/' + reads_filename
+
+	#File not found
+	else:
+		logFile = open(logFilepath, 'a')
+		logFile.write("File not found : " + CompressedRead)
+		logFile.close()
+		sys.exit(1)
+	
+
+	##################################################
+	##    Test and unpack archive if test is ok     ##
+	##################################################
+
+	### TEST ###
+
+	os.system('echo "unpacking started at :" >> ' + logFilepath + ' 2>&1 | date >> ' + logFilepath + ' 2>&1')
+
+	try:
+		patoolib.test_archive(CompressedRead,verbosity=0)
+
+	except:
+		logFile = open(logFilepath, 'a')
+		logFile.write("Problem with file : " + CompressedRead)
+		os.system('echo "unpacking stopped with status error 1 at" : >> ' + logFilepath + ' 2>&1 | date >> ' + logFilepath + ' 2>&1')
+		is_corruputed=True
+		sys.exit(1)
+
+	
+	### IF TEST=SUCESS --> UNPACK IN CURRENT WORKING DIRECTORY ###
+
+	else:
+		Archive(CompressedRead).extractall(workdir)
+		is_corruputed=False
+
+	os.system('echo "unpacking finished sucessfully at" : >> ' + logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	os.system('echo "\n************************** READS UNPACKING : END **************************\n" >> '+ logFilepath)
+
+	return reads_filename,is_corruputed
+
+
+def normalization(reads1, reads2, targetCov, nbThreads, Gid, logFilepath, reportFilepath):
+
+	reads1_normalized = Gid + "_norm_R1.fastq"
+	reads2_normalized = Gid + "_norm_R2.fastq"
+
+	cmd = "bbnorm.sh -Xmx20g " + \
+	"in=" + reads1 + " " + \
+	"in2=" + reads2 + " " + \
+	"target=" + str(targetCov) + " " + \
+	"mindepth=-1 " + \
+	"maxdepth=1 " + \
+	"out=" + reads1_normalized + " " + \
+	"out2=" + reads2_normalized + " " + \
+	"outt=trashReads.fastq " + \
+	"threads=" + str(nbThreads) + " " + \
+	"prefilter=t " + \
+	"tossbadreads=t" 
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\nReads Normalization to " + str(targetCov) + "X\n")
+	logFile.write(cmd + "\n")
+	logFile.close()
+
+	os.system('echo "bbnorm started at : " >> ' + logFilepath + " 2>&1 | date >> " + logFilepath)
+	os.system(cmd)
+	os.system('echo "bbnorm ended at" : >> ' + logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	report_file = open(reportFilepath, "a")
+	report_file.write("TARGET COVERAGE FOR NORMALIZATION : " + str(targetCov) + 'X\n\n')
+	report_file.close()
+	
+	return reads1_normalized, reads2_normalized
+    
+
+def Check_coverage(reads1,reads2,genus,minCov,nbThreads,maxMemory,workdir,logFilepath,reportFilepath):
+    
+    os.system('echo "\n************************** QUALITY CONTROL (Check coverage) : START **************************\n" >> '+ logFilepath)
+
+    #Convert maxMemory argument : Aaaa int to to -XmxAg form
+    Maxmemoryg=Get_maxMemoryg(maxMemory)
+
+    logFile = open(logFilepath, "a")
+    logFile.write("Retrieving default reference...")
+
+    #Get default reference before mapping accorded to this reference
+    reference=get_default_reference(genus,workdir,logFilepath)
+
+    logFile.write("...ok\n")
+
+    os.system('echo "bbmap started at : " >> ' + logFilepath + " 2>&1 | date >> " + logFilepath)
+
+    ##################################################
+    ## Map the reads and generate its quality stats ##
+    ##################################################
+    cmd = "bbmap.sh " +\
+    "in="+reads1+" "+\
+    "in2="+reads2+" "+\
+    "ref="+reference+" "+\
+    "covstats=" + workdir +"/stats/covstats.txt "+\
+    "covhist=" + workdir + "/stats/covhist.txt "+\
+    "bincov=" + workdir + "/stats/bincov.txt "+\
+    "rpkm=" + workdir + "/stats/rpkm_fpkm.txt "+\
+    "ehist=" + workdir + "/stats/error_hist "+\
+    "statsfile=" + workdir + "/stats/reads_summary.txt "+\
+    "covbinsize=1000 " + \
+    "k=13 "+\
+    "threads="+str(nbThreads)+" "+\
+    "nodisk "+\
+    str(Maxmemoryg)+" "+\
+    ">> " + str(logFilepath) + " 2>&1"
+
+    logFile.write("\n" + cmd + "\n")
+    os.system(cmd)
+
+    os.system('echo "bbmap ended at" : >> ' + logFilepath + " 2>&1 | date >> " + logFilepath)
+
+    #####################
+    ## Quality control ##
+    #####################
+    logFile.write("quality control : check medium coverage")
+    #si coverage < minCov ---> écrire message d'erreur dans stdin + report + os.exit(1)
+    #ajouter coverage trouvé + std variantion dans report
+    coverage=subprocess.check_output("cat " + workdir + "/stats/covstats.txt | cut -f2 | sed -n \"2 p\"", shell=True).rstrip().replace(',','.')
+    coverage_std_var=subprocess.check_output("cat " + workdir + "/stats/covstats.txt | cut -f11 | sed -n \"2 p\"", shell=True)
+    
+    report_file = open(reportFilepath, "a")
+    report_file.write("READS DEEP COVERAGE : " + coverage + '\n')
+    report_file.write("COVERAGE STANDARD DEVIATION : " + coverage_std_var + "\n")
+    report_file.close()
+
+    if (float(coverage) < float(minCov)):
+        logFile.write("\n Warning, too low coverage : " + coverage + "x")
+        logFile.close()
+        sys.exit(1)
+
+    logFile.write("...ok\n")
+    logFile.write("RPKM / FPKM : \n")
+    os.system("cat stats/rpkm_fpkm.txt >> " + logFilepath)
+    logFile.write("\nCoverage histogram : \n")
+    os.system("cat stats/covhist.txt >> " + logFilepath)
+    logFile.close()
+
+    os.system('echo "\n************************** QUALITY CONTROL (Check coverage) : END **************************\n" >> '+ logFilepath)
+
+    return int(float(coverage))
+
+
+def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, Gid, workdir, report, logFilepath):
+	
+	os.system('echo "************************** TRIMMING WORKFLOW : START ************************** " >> '+ logFilepath)
+
+	Maxmemoryg=Get_maxMemoryg(maxMemory)
+	logFile = open(logFilepath, "a")
+
+	##################################################
+	## Map the reads and generate its quality stats ##
+	##################################################
+
+	logFile.write("Calculating number of reads per file...")
+	nbReads_before_trimming = number_of_reads(reads1)
+	logFile.write("...ok\n")
+
+	forward_paired = workdir + "/" + Gid + "_paired_R1.fq"
+	forward_unpaired = workdir + "/" + Gid + "_unpaired_R1.fq.gz"
+	reverse_paired = workdir + "/" + Gid + "_paired_R2.fq"
+	reverse_unpaired = workdir + "/" + Gid + "_unpaired_R2.fq.gz"
+
+	os.system('echo "Trimmomatic started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	command = "java -jar " + str(Maxmemoryg) + " /opt/Trimmomatic/0.33/trimmomatic-0.33.jar PE -threads " + \
+	str(nbThreads) + " -phred33 " + reads1 + " " + reads2 + " " + forward_paired + " " + \
+	forward_unpaired + " " + reverse_paired + " " + reverse_unpaired + \
+	" ILLUMINACLIP:" + adaptaters + ":2:" + str(phredscore) + ":15 " + \
+	"TRAILING:20 MINLEN:50 >> " + logFilepath + " 2>&1"
+
+	logFile.write("\n" + command + "\n")
+	os.system(command)
+	os.system('echo "Trimmomatic ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	#os.system("pigz " + forward_paired + ".gz")
+	#os.system("pigz " + reverse_paired + ".gz")
+
+	os.remove(forward_unpaired)
+	os.remove(reverse_unpaired)
+
+	logFile.write("Calculating number of reads per file after trimming...")
+	nbReads_after_trimming = number_of_reads(forward_paired)
+	logFile.write("...ok\n")
+	logFile.close()
+
+	report_file = open(report, "a")
+	report_file.write("" + \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"+            TRIMMING RESULTS           +\n" + \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"\n")
+	report_file.write("READS TRIMMING PARAMETERS : minQual = 20 -- minLen = 50 -- minPhred = " + str(phredscore) + "\n")
+	report_file.write("READS COUNT BY FILE BEFORE TRIMMING : " + str(nbReads_before_trimming) + " \n")
+	report_file.write("READS COUNT BY FILE AFTER TRIMMING : " + str(nbReads_after_trimming) + " \n")
+	report_file.write("TRIMMED READS COUNT : " + str(int(nbReads_before_trimming-nbReads_after_trimming)) + "\n\n")
+	report_file.close()
+
+	list_reads_trim = [forward_paired, reverse_paired]
+	
+	os.system('echo "\n************************** TRIMMING WORKFLOW : END **************************\n" >> '+ logFilepath)
+	return list_reads_trim
+
+
+def Fastqc(reads1, reads2, adaptators, outputName, nbThreads, workdir, logFilepath, reportFilepath):
+
+	#A mettre dans fichier REPORT : lien vers le report html
+
+	os.system('echo "\n************************** FASTQC REPORT : START **************************\n" >> '+ logFilepath)
+
+	os.mkdir(workdir + "/" + outputName)
+	os.system('echo "FastQC started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	cmd = "fastqc -q -t " + str(nbThreads) + " --contaminants " + adaptators + \
+		" -o " + workdir + "/" + outputName + " " + reads1 + " " + reads2 + " >> " + logFilepath + " 2>&1"
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\n" + cmd + "\n")
+	os.system(cmd)
+
+	os.system('echo "FastQC ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	#Full path to zip files
+	TXTfastqcResult_R1 = workdir + "/fastqc/" + reads1.rsplit('/',-1)[-1].rsplit('.')[0] + "_fastqc/fastqc_data.txt"
+	TXTfastqcResult_R2 = workdir + "/fastqc/" + reads2.rsplit('/',-1)[-1].rsplit('.')[0] + "_fastqc/fastqc_data.txt"
+
+	#Full path to txt files
+	ZIPfastqcResult_R1 = workdir + "/fastqc/" + reads1.rsplit('/',-1)[-1].rsplit('.')[0] + "_fastqc.zip"
+	ZIPfastqcResult_R2 = workdir + "/fastqc/" + reads2.rsplit('/',-1)[-1].rsplit('.')[0] + "_fastqc.zip"
+
+	#Full path to html files
+	HTMLfastqcResult_R1 = workdir + "/fastqc/" + reads1.rsplit('/',-1)[-1].rsplit('.')[0] + "_fastqc"
+	HTMLfastqcResult_R2 = workdir + "/fastqc/" + reads2.rsplit('/',-1)[-1].rsplit('.')[0] + "_fastqc"
+
+	#inflate zip files
+	os.system("unzip " + ZIPfastqcResult_R1 + " -d fastqc ")
+	os.system("unzip " + ZIPfastqcResult_R2 + " -d fastqc ")
+
+	listResult = [HTMLfastqcResult_R1, HTMLfastqcResult_R2, TXTfastqcResult_R1, TXTfastqcResult_R2]
+
+	os.system('echo "\n************************** FASTQC REPORT : END **************************\n" >> '+ logFilepath)
+
+	return listResult
+
+
+def commande_iVARCAll(reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir,logFilepath, report, reference):
+
+    os.system('echo "\n************************** iVARCall2 WORKFLOW : START **************************\n" >> '+ logFilepath)
+
+    logFile = open(logFilepath, "a")
+    logFile.write("Get default reference...")
+    logFile.write("...ok\n")
+    
+
+    os.system('echo "iVARCall2 started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+    cmd="iVARCall2 -ref " + reference + " -reads " + reads1 + " " + reads2 + \
+        " -a " + adaptaters + " -o " + Gid + "_iVARCAll -T " + str(nbThreads) + " -m " + str(maxMemory) + \
+        " --removeDuplicates --indelRealigner --removeTmpFiles --onlyVCF" + " >> " + logFilepath + " 2>&1"
+    
+    logFile.write("\n" + cmd + "\n")
+    logFile.close()
+    
+    os.system(cmd)
+
+    os.system('echo "iVARCall2 ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+    iVARCAll_log = Gid + "_iVARCAll/" + Gid + "_iVARCAll.log" # récupérer le log créer par iVARCall
+    VCF_file = Gid + "_iVARCAll/VCF/" + Gid + ".g.vcf" # récupérer path VCF
+
+    iVARCall_log_parser(iVARCAll_log, VCF_file, reference, report)
+
+    shutil.rmtree(Gid + "_iVARCAll/BAM") # remove BAM folder
+    shutil.rmtree("reference_iVARCAll") # remove reference folder
+    
+    os.system('echo "\n************************** iVARCall2 WORKFLOW : END **************************\n" >> '+ logFilepath)
+
+    return VCF_file
+    
+
+def iVARCall_log_parser(iVARCAll_log, VCF_file, reference, report):
+
+	logFile = open(iVARCAll_log, "r")
+	logLines = logFile.readlines()
+	logFile.close()
+
+	dicoStat = extractReadStatistics(logLines)
+
+	report_file = open(report, "a")
+	report_file.write(""+ \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"+         iVARCALL 2 METRICS           +\n" + \
+	"++++++++++++++++++++++++++++++++++++++++ \n\n")
+
+	reference = reference.split('/')[-1]
+	report_file.write("REFERENCE GENOME : " + reference.split('.')[0] + '\n')
+	report_file.write("BREADTH COVERAGE : " + dicoStat["breadth cov."] + '\n')
+	report_file.write("TOTAL READS COUNT : " + dicoStat["reads"] + '\n')
+	report_file.write("TOTAL READS COUNT AFTER TRIMMING : " + dicoStat["trimming"] + '\n')
+	report_file.write("MAPPED READS : " + dicoStat["mapped"] + '\n')
+	report_file.write("PAIRED MAPPED READS : " + dicoStat["paired"] + '\n')
+
+	SNPnb = numberOfVariant_from_VCF(VCF_file)
+	report_file.write("SNPs COUNT (UNFILTERED) : " + str(SNPnb) + '\n\n\n')
+
+	report_file.close()
+
+
+def extractReadStatistics(lines):
+	"""
+	Extract reads statistics from the log file lines.
+	@param lines : lines of the log file 
+	@type lines : list
+	@return: dictionnary with sample name in key and for value an other \
+	dictionnary with the number of reads before and after trimming, \
+	the number of reads mapped and properly paired, \
+	and the deep and breadth coverage.
+	@rtype: dictionnary 
+	"""
+
+	dicoResult = {}
+
+	for line in lines :
+			
+		if("Number of reads before trimming" in line):
+			nbReads = line.split(' ')[6]
+			nbReads = nbReads.rstrip()
+			dicoResult["reads"] = nbReads
+
+		if("(QC-passed reads + QC-failed reads)" in line):
+			trimming = line.split(' ')[0]
+			dicoResult["trimming"] = trimming	
+			
+		if(" mapped (" in line):
+			mapped = line.split(' ')[0]
+			dicoResult["mapped"] = mapped	
+
+		if("properly paired" in line):
+			paired = line.split(' ')[0]
+			dicoResult["paired"] = paired
+			
+		if("Deep coverage" in line):
+			deep = line.split(' ')[3]
+			deep = deep.rstrip()
+			dicoResult["deep cov."] = deep	
+
+		if("Breadth coverage" in line):
+			breadth = line.split(' ')[3]
+			breadth = breadth.rstrip()
+			dicoResult["breadth cov."] = breadth
+
+	return dicoResult	
+
+
+def numberOfVariant_from_VCF(VCF_file):
+
+	vcfFile = open(VCF_file, "r")
+	lines = vcfFile.readlines()
+	vcfFile.close()
+
+	SNPnb = 0
+
+	for line in lines :
+		if(line[0]!='#' and line.split('\t')[4]!='.'):
+			SNPnb += 1
+
+	return SNPnb		
+
+
+def number_of_reads(reads_file):
+
+	reads = open(reads_file, 'r')
+	nbReads = len(reads.readlines())
+	reads.close()
+
+	return nbReads/4 #fastqfile = 4 lines per read
+
+
+def Assembly(reads1,reads2,cwd,logFilepath,nbThreads): #Perform de novo assembly with Spades
+
+	os.system('echo "\n************************** DE NOVO ASSEMBLY WORKFLOW : START **************************\n" >> '+ logFilepath)
+	AssemblyDeNovopath = cwd + "/Assembly"
+
+	os.system('echo "Assembly started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	cmd = "spades --careful " + \
+	" -1 " + reads1 + " " + \
+	" -2 " + reads2 + " " + \
+	" -o " + AssemblyDeNovopath + \
+	" -t "  + str(nbThreads) + " >> " + logFilepath + " 2>&1"
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\n" + cmd + "\n")
+	logFile.close()
+
+	os.system(cmd)
+
+	os.system('echo "Assembly ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	copyfile(AssemblyDeNovopath + "/contigs.fasta",cwd + "/contigs.fasta")
+	copyfile(AssemblyDeNovopath + "/scaffolds.fasta",cwd + "/scaffolds.fasta")
+	
+	os.system('echo "\n************************** DE NOVO ASSEMBLY WORKFLOW : END  **************************\n" >> '+ logFilepath)
+
+	#return contig file path
+	return cwd + "/contigs.fasta"
+
+
+def Assembly_control(AssemblyDeNovo, referencepath, minContig, cwd, logFilepath, nbThreads):
+
+	os.system('echo "\n************************** ASSEMBLY CONTROL : START **************************\n" >> '+ logFilepath)
+	
+	quast_html_file = cwd + "/QUAST" 
+
+	### Start Quast ###
+	os.system('echo "Quast started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	cmd = "quast " + \
+	" -R " + referencepath.rstrip() + \
+	" -o " + quast_html_file + \
+	" -t " + str(nbThreads) + ' ' + \
+	" -m " + str(minContig) + " " +  \
+	" --scaffolds " + \
+	AssemblyDeNovo + \
+	" >> " + logFilepath + " 2>&1"
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\n" + cmd + "\n")
+	logFile.close()
+
+	os.system(cmd)
+
+	os.system('echo "Quast ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	os.system('echo "\n************************** ASSEMBLY CONTROL : END **************************\n" >> '+ logFilepath)
+
+	return quast_html_file
+
+
+def TrimContigsByLen(fasta_file, min_length,logFilepath): #In order to do not keep "bad" contigs that potentially arent a part of this genome
+
+    os.system('echo "\n************************** CONTIGS TRIMMING : START **************************\n" >> '+ logFilepath)
+    os.system('echo "Contigs trimming started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+    # Stock the sequences in a dictionnary
+    sequences={}
+
+    # Biopython fasta parsing
+    for seq_record in SeqIO.parse(fasta_file, "fasta"):
+
+        # Take the current sequence
+        sequence = str(seq_record.seq).upper()
+
+        # Keep sequence accordint to its length
+        if (len(sequence) >= min_length):
+            sequences[sequence] = seq_record.id
+
+    # Write non-trimmed sequences == filtered output
+    trimmedcontigs = open(fasta_file + "_trimmed.fasta", "w+")
+    # Just read the hash table and write on the file as a fasta format
+    for sequence in sequences:
+            trimmedcontigs.write(">" + sequences[sequence] + "\n" + sequence + "\n")
+    trimmedcontigs.close()
+    
+    os.system('echo "Contigs trimming ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath )
+    os.system('echo "\n************************** CONTIGS TRIMMING : END **************************\n" >> '+ logFilepath)
+
+    #return trimmed contigs file path
+    return fasta_file + "_trimmed.fasta"
+
+
+def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory):
+
+	os.system('echo "\n************************** SCAFFOLDING WORKFLOW : START **************************\n" >> '+ logFilepath)
+
+	Maxmemoryg=Get_maxMemoryg(maxMemory) 
+	scaffold_file = Gid + "_scaffold.fasta"
+	
+	os.system('echo "Scaffolding started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath )
+
+	cmd = "java " + Maxmemoryg + " -jar /opt/medusa/1.0/medusa.jar -d -w2 -scriptPath /opt/medusa/1.0/medusa_scripts/ " + \
+		" -i " + contigs_file + " -o " + scaffold_file + " -f " + referencepath + " >> " + logFilepath + " 2>&1"
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\n" + cmd + "\n")
+	logFile.close()
+
+	os.system(cmd)	
+
+	os.system('echo "Scaffolding ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath )
+
+	os.system('echo "\n************************** SCAFFOLDING WORKFLOW : END **************************\n" >> '+ logFilepath)
+
+
+	return scaffold_file	
+
+
+def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen, logFilepath, report):
+
+	os.system('echo "\n************************** CLOSING GAPS : START **************************\n" >> '+ logFilepath)
+
+	#os.system("gunzip " + read1)
+	#os.system("gunzip " + read2)
+
+	#read1 = '.'.join(read1.split('.')[0:-1])
+	#read2 = '.'.join(read2.split('.')[0:-1])
+
+	os.system('echo "GMcloser started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+	
+	cmd = "gmcloser -t " + scaffold + " -q " + contigs + " -l " + str(readsLen) + \
+	" -p gmclos -r " + read1 + " " + read2 + " -n " + str(nbThreads) + " -bq phred33 "
+
+	cmd = cmd + " >> " + logFilepath + " 2>&1"
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\n" + cmd + "\n")
+	logFile.close()
+
+	os.system(cmd)
+
+	os.system('echo "GMcloser ended at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
+
+	###################
+
+	CloseGapsFile = Gid + "_scaffold_closed.fasta"
+
+	if os.path.isfile("gmclos.gapclosed.fa"):
+		#rename gapclosed output file
+		os.system("mv gmclos.gapclosed.fa " + CloseGapsFile)
+
+	else :
+		os.system('echo "ERROR GMcloser no result"  ')	
+		CloseGapsFile = scaffold
+		rep = open(report, 'a')
+		rep.write("\nERROR GMcloser --> step skipping\n")
+		rep.close()
+
+
+	###################
+
+	os.system("rm -r gmclos*")	
+
+	os.system('echo "\n************************** CLOSING GAPS : END **************************\n" >> '+ logFilepath)
+	return CloseGapsFile
+
+
+def rename_contig(fasta_file, genome_id,logFilepath):
+
+	os.system('echo "\n************************** RENAME CONTIGS : START **************************\n" >> '+ logFilepath)
+
+	fasta = open(fasta_file, 'r')
+	fasta_lines = fasta.readlines()
+	fasta.close()
+
+	rename_fastaFile_name = genome_id + "_assembly.fasta"
+	rename_fastaFile = open(rename_fastaFile_name, 'w')
+
+	i = 1
+	for line in fasta_lines :
+		if line[0] == '>':
+			rename_fastaFile.write('>' + genome_id + '_' + str(i) + '\n')
+			i+=1
+		else :
+			j = 1
+			for n in line :
+
+				if j%70==0 :
+					rename_fastaFile.write('\n')
+			
+				rename_fastaFile.write(n)
+			
+				j+=1	
+
+	rename_fastaFile.close()
+
+	os.system('echo "\n************************** RENAME CONTIGS : END **************************\n" >> '+ logFilepath)
+	
+	return rename_fastaFile_name	
+
+
+def annotation(fasta_file, genome_id, genus, nbThreads, logFilepath):
+
+	os.system('echo "\n************************** GENOME ANNOTATION : START **************************\n" >> '+ logFilepath)
+
+	cmd = "prokka --fast --genus " + genus + " --prefix annotation" + \
+	" -cpus " + str(nbThreads) + " " + fasta_file
+	cmd = cmd + " >> " + logFilepath + " 2>&1"
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\n" + cmd + "\n")
+	logFile.close()
+
+	os.system(cmd)
+
+	annotation_gbk = genome_id + ".gbk"
+	annotation_gff = genome_id + ".gff"
+
+	os.system("mv annotation/annotation.gbk " + annotation_gbk)
+	os.system("mv annotation/annotation.gff " + annotation_gff)
+
+	os.system('echo "\n************************** GENOME ANNOTATION : END **************************\n" >> '+ logFilepath)
+
+	return annotation_gbk, annotation_gff
+
+
+def get_len(fastqc_txt):
+
+    readslength = subprocess.check_output("grep 'Sequence length' " + fastqc_txt + " | cut -f2 ",shell=True).rstrip('\n')
+    readslength = readslength.split('-')[-1]
+    return readslength
+
+	
+def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report, log, max_percent_diff):
+
+	fasta_dict = SeqIO.to_dict(SeqIO.parse(scaffold, "fasta"))
+	fasta_len_dict = {}
+	sum_scaffold_len = 0
+
+	for seq in fasta_dict :
+		scaffold_len = len(str(fasta_dict[seq].seq))
+		fasta_len_dict[seq] = scaffold_len
+		sum_scaffold_len += scaffold_len
+
+	ref_dict = SeqIO.to_dict(SeqIO.parse(reference, "fasta"))
+	sum_reference_len = 0
+	for seq in ref_dict :
+		ref_len = len(str(ref_dict[seq].seq))
+		sum_reference_len += ref_len
+
+
+	diff_longer = abs(100 - (float(sum_scaffold_len)/float(sum_reference_len) * 100))
+
+	if (diff_longer > max_percent_diff) :
+		logFile = open(log, 'a')
+		reportFile = open(report, 'a')
+		error = "ERROR : assembly length too different from the reference length " + \
+		"(ref:" + str(sum_reference_len) + "pb | assembly:" + str(sum_scaffold_len) + "pb) !!!"
+		print error
+		logFile.write(error)
+		reportFile.write(error)
+		logFile.close()
+		reportFile.close()
+
+		os.system("rm -r temp reference_scaffolding Assembly \
+			fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
+			reference_gff *_scaffold_closed.fasta* *_paired_R*.fq *_R*.fastq *_iVARCAll")
+
+		sys.exit(1)
+
+
+	tmp_sam_file = "check_scaffold_coverage.sam"	
+
+	os.system("bwa index " + reference)
+	os.system("bwa mem -t " + str(nbThreads) + " " + reference + " " + scaffold + \
+		" > " + tmp_sam_file)	
+
+	os.system("rm " + reference + ".*")
+
+	tmp_sam_file2 = "check_scaffold_coverage_mapped.sam"
+	os.system("samtools view -F 4 " + tmp_sam_file + " > " + tmp_sam_file2)
+
+	sam_file = open(tmp_sam_file2, 'r')
+	lines = sam_file.readlines()
+	sam_file.close()
+
+	sum_mapped_scaffold = 0
+	scaffold_mapped_lit = []
+
+	for line in lines :
+
+		if line[0] == '@' :
+			continue
+
+		scaffoldId = line.split('\t')[0]	
+
+		if scaffoldId not in scaffold_mapped_lit :
+			scaffold_mapped_lit.append(scaffoldId)
+			sum_mapped_scaffold += fasta_len_dict[scaffoldId]
+
+	os.remove(tmp_sam_file)
+	os.remove(tmp_sam_file2)
+	print sum_mapped_scaffold
+	print sum_scaffold_len
+	mapped_percent = float(sum_mapped_scaffold) / float(sum_scaffold_len) * 100.0
+
+	if mapped_percent >= min_percent :
+		return
+
+	else :
+		logFile = open(log, 'a')
+		reportFile = open(report, 'a')
+		error = "ERROR : only " + str(mapped_percent) + " percent map on " + reference + " !!!"
+		print error
+		logFile.write(error)
+		reportFile.write(error)
+		logFile.close()
+		reportFile.close()
+
+		os.system("rm -r temp reference_scaffolding Assembly \
+			fastqc contigs.fasta* scaffolds.fasta stats mash_genome_db annotation trashReads.fastq \
+			reference_gff *_scaffold_closed.fasta* *_paired_R*.fq *_R*.fastq *_iVARCAll")
+
+		sys.exit(1)
+
+
+#main function	
+def main():	
+
+
+	##########################################
+	#			Initialisation				 #
+	##########################################
+
+	# Processing time counter
+	t0 = time.time()
+	
+	# Get arguments 
+	parser=get_parser()
+	
+	# Print parser.help if no arguments
+	if len(sys.argv)==1:
+		parser.print_help()
+		sys.exit(1)
+	
+	Arguments=parser.parse_args()	
+
+	print "Step 1/16 ---> Initialisation"
+
+	# Go to working directory gived by Arguments.workdir
+	if(Arguments.workdir != '.'):
+		os.chdir(Arguments.workdir)	
+
+	cwd = os.getcwd() #Current working directory FULL path	
+
+	# GLOBAL VARIABLES
+	GENOME_ID = '_'.join(Arguments.reads1.split('/')[-1].split('.')[0].split('_')[0:-1])
+	LOG_FILE = cwd + "/" + GENOME_ID + ".log"
+	REPORT_FILE = GENOME_ID + "_report.txt"
+	FINAL_OUTPUT_DIRECTORY = GENOME_ID
+	ADAPTATERS_FILE = "/mnt/NAS/NASBIO1/DATA/all_known_iontorrent-Illumina.fa"
+
+	#Retrieve Python command
+	command=""
+	for arg in sys.argv:
+		command = command + " " + arg	
+
+	# First write in Log File : date and command
+	LOG = open(LOG_FILE, 'w')
+	LOG.write("READSPROCESS STARTED :" + time.strftime("%d/%m/%Y") + ' ' + time.strftime("%H:%M:%S") + '\n\n')
+	LOG.write("COMMAND USED :" + command + '\n\n\n')
+	LOG.close()
+
+	# Check GENOME_ID
+	check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, LOG_FILE)
+	check_MongoDB_exist(GENOME_ID, Arguments.genus, LOG_FILE)
+
+	# Make final directory 
+	os.makedirs(FINAL_OUTPUT_DIRECTORY)
+
+	# First write in Report file : Metadata and key processing parameters
+	REPORT = open(REPORT_FILE, 'w')
+	REPORT.write("++++++++++++++++++++++++++++++++++++++++ DATASET REPORT  ++++++++++++++++++++++++++++++++++++++++\n" + \
+	"GENERATED " + time.strftime("%d/%m/%Y") + ' AT ' + time.strftime("%H:%M:%S") + '\n' + \
+	"READS : \n" + Arguments.reads1.split('/')[-1] + "\n" + Arguments.reads2.split('/')[-1] + '\n' + \
+	"GENUS : " + Arguments.genus + '\n' + \
+	"SP : " + Arguments.species + '\n' + \
+	"\n"+ \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"+                 METADATA             +\n" + \
+	"++++++++++++++++++++++++++++++++++++++++ \n\n" + \
+	"Supplied by : " + Arguments.supplier + '\n' +\
+	"Sequencing center : " + Arguments.center + '\n' + \
+	"Sequencing technology : " + Arguments.technology + '\n' + \
+	"Projet id : " + Arguments.projetID + '\n' + \
+	"\n"+ \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"+             KEY PARAMETERS           +\n" + \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"\n"+ \
+	"Coverage threshold : " + str(Arguments.minCov) + '\n' + \
+	"Contig length threshold : " + str(Arguments.minContigLen) + '\n' + \
+	"Phred score threshold : " + str(Arguments.minPhredScore) + '\n' + \
+	"\n"+ \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"+              MAIN METRICS            +\n" + \
+	"++++++++++++++++++++++++++++++++++++++++ \n" + \
+	"\n")
+	REPORT.close()
+
+
+	##########################################
+	#				Check reads				 #
+	##########################################
+	
+	print "Step 2/16 ---> Check reads format"
+
+	### READ 1 ###
+
+	# If file isn't in the right format, analyse it and uncompress it if possible. 
+	if(Arguments.reads1.split('.')[-1] not in ["fastq", "fq", "FASTQ", "FQ"]):
+		Arguments.reads1,IS_corrupted = uncompress_in_workdir(Arguments.reads1, LOG_FILE,cwd)
+
+		if (IS_corrupted==True):
+			# ASTUCE : utiliser booleen IS_corrupted: En considerant que le script sera appelé pour chaque paire de reads, sauter le traitement du reads pair si le premier est déjà corrompu
+			sys.exit(1) 
+
+	# File is already in the right format : copy it in the current work directory		
+	else:
+		copyfile(Arguments.reads1, cwd + "/" + list(Arguments.reads1.rsplit('/',1))[1])
+		Arguments.reads1= cwd + '/' + Arguments.reads1.split('/')[-1]
+		LOG=open(LOG_FILE,"a")
+		LOG.write("Reads already uncompressed in:" + Arguments.reads1 + "\n")
+		LOG.close()
+
+
+	### READ 2 : Same procedure (if read1 processed successfully, according to IS_corrupted ) ###
+
+
+	if(Arguments.reads2.split('.')[-1] not in ["fastq", "fq", "FASTQ", "FQ"]):
+		Arguments.reads2,IS_corrupted = uncompress_in_workdir(Arguments.reads2, LOG_FILE,cwd)
+		
+		if (IS_corrupted==True):
+			sys.exit(1)
+
+	else:
+		copyfile(Arguments.reads2, cwd + "/" + list(Arguments.reads2.rsplit('/',1))[1])
+		Arguments.reads2 = cwd + '/' + Arguments.reads2.split('/')[-1]	
+		LOG=open(LOG_FILE,"a")
+		LOG.write("reads already uncompressed in:" + Arguments.reads2)
+		LOG.close()	
+
+
+	##########################################
+	#		    Coverage checking			 #
+	##########################################
+	
+	print "Step 3/16 ---> quality control"
+	coverage = Check_coverage(Arguments.reads1,Arguments.reads2,Arguments.genus,Arguments.minCov,Arguments.nbThreads,Arguments.maxMemory,cwd,LOG_FILE,REPORT_FILE)
+
+
+	##########################################
+	#		      Normalization 			 #
+	##########################################
+	
+	print "Step 4/16 ---> normalization"
+	if(coverage > Arguments.targetCov):
+		reads1, reads2 = normalization(Arguments.reads1, Arguments.reads2, Arguments.targetCov, Arguments.nbThreads, GENOME_ID, LOG_FILE, REPORT_FILE)
+		os.system("mv " + reads1 + " " + Arguments.reads1)
+		os.system("mv " + reads2 + " " + Arguments.reads2)
+
+	##########################################
+	#		    	  FASTQC		    	 #
+	##########################################
+
+	print "Step 5/16 ---> FASTQC"
+
+	fastqcResult = Fastqc(Arguments.reads1, Arguments.reads2, ADAPTATERS_FILE, "fastqc", Arguments.nbThreads, cwd, LOG_FILE, REPORT_FILE)
+
+	FASTQC_R1 = fastqcResult[0]
+	FASTQC_R2 = fastqcResult[1]
+	fastqc_txtreport = fastqcResult[2]
+
+
+	##########################################
+	#		    	iVARCall		    	 #
+	##########################################
+
+	print "Step 6/16 ---> iVARCall"
+
+	VCF_FILE = commande_iVARCAll(Arguments.genus, Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
+		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.RefVariant)
+
+
+	##########################################
+	#		    Trimming reads		    	 #
+	##########################################
+
+	print "Step 7/16 ---> Trimming"
+	reads_trim =  soft_trimming(Arguments.reads1, Arguments.reads2, ADAPTATERS_FILE, Arguments.nbThreads, Arguments.maxMemory, Arguments.minPhredScore, GENOME_ID, cwd, REPORT_FILE, LOG_FILE)
+	
+	reads1_trim = reads_trim[0]
+	reads2_trim = reads_trim[1]
+
+
+	##########################################
+	#	        De novo assembly        	 #
+	##########################################	
+
+	print "Step 8/16 ---> De novo assembly"
+
+	CONTIGS = Assembly(reads1_trim,reads2_trim,cwd,LOG_FILE,Arguments.nbThreads)
+
+
+	##########################################
+	#	           Scaffolding   	         #
+	##########################################
+
+	print "Step 9/16 ---> Scaffolding"
+
+	os.system("mkdir RefScaffold")
+	os.system("cp " + Arguments.RefScaffold + " RefScaffold/.")
+	scaffold = scaffolding(CONTIGS, "RefScaffold", GENOME_ID, LOG_FILE, Arguments.maxMemory)
+
+
+	##########################################
+	#	          Gap Closing	             #
+	##########################################	
+
+	print "Step 10/16 ---> Gap closing"
+
+	readsLen = get_len(str(fastqc_txtreport))
+	scaffold = CloseGaps(scaffold, CONTIGS, reads1_trim, reads2_trim, Arguments.nbThreads, GENOME_ID, readsLen, LOG_FILE, REPORT_FILE)
+
+	##########################################
+	#	         Contig filtration     	 	 #
+	##########################################
+
+	print "Step 11/16 ---> Contig filtration"
+
+	scaffold = TrimContigsByLen(scaffold, Arguments.minContigLen, LOG_FILE)
+
+
+	##########################################
+	#	      QUAST quality control     	 #
+	##########################################
+
+	print "Step 12/16 ---> Assembly control"
+
+	check_scaffold_coverage(scaffold, Arguments.RefScaffold, Arguments.min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE, Arguments.max_len_diff)
+	QUAST = Assembly_control(scaffold, Arguments.RefScaffold, Arguments.minContigLen, cwd, LOG_FILE, Arguments.nbThreads)
+	
+
+	##########################################
+	#	        Rename scaffolds           	 #
+	##########################################
+
+	print "Step 13/16 ---> Rename scaffold"
+
+	ASSEMBLY = rename_contig(scaffold, GENOME_ID,LOG_FILE)
+
+
+	##########################################
+	#	        	Annotation            	 #
+	##########################################
+
+	print "Step 14/16 ---> Genome annotation"
+
+	GBK, GFF = annotation(ASSEMBLY, GENOME_ID, Arguments.genus, Arguments.nbThreads, LOG_FILE)
+
+
+	##########################################
+	#	          Save results          	 #
+	##########################################
+
+	print "Step 15/16 ---> Moving files and add to mongoDB"
+
+	sampleObjet = sample(GENOME_ID, REPORT_FILE, \
+		Arguments.reads1, Arguments.reads2, readsLen, FASTQC_R1, FASTQC_R2, \
+		ASSEMBLY, CONTIGS, QUAST, GBK, GFF, \
+		RESULT_ST, MLST_id, VCF_FILE)
+	sampleObjet.moveFiles(FINAL_OUTPUT_DIRECTORY)
+
+
+	##########################################
+	#	        Remove tmp files	       	 #
+	##########################################
+
+	print "Step 16/16 ---> Cleaning temporary files"
+
+	# Last write in log file : date and time elapsed
+	t1 = time.time() - t0
+	LOG = open(LOG_FILE, 'a')
+	LOG.write(" \n\n\n READSPROCESS ENDED :" + time.strftime("%d/%m/%Y") + ' ' + time.strftime("%H:%M:%S") + "\n\n")
+	LOG.write(" TIME ELAPSED (hour:min:sec) :" + str(datetime.timedelta(seconds=int(t1))))
+	LOG.close()
+
+	os.system("mv " + GENOME_ID + ".log " + FINAL_OUTPUT_DIRECTORY + "/.")
+
+	# Remove tmp files and directories
+	os.system("rm -r  " + GENOME_ID + "* temp reference_scaffolding Assembly \
+		fastqc contigs.fasta* scaffolds.fasta stats annotation trashReads.fastq \
+		reference_gff")
+
+
+if __name__ == "__main__":
+	main()	        		
