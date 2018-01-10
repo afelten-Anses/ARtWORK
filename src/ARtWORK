@@ -43,6 +43,9 @@ def get_parser():
 	parser.add_argument('-s', action="store", dest='species',
 						type=str, required=True, help='species (REQUIRED)')
 
+	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
+						type=str, default="~/NASBIO1", help='NASBIO1 path (default:~/NASBIO1)')
+
 	parser.add_argument('-minCov', action="store", dest='minCov',
 						type=int, default=30, help='minimum coverage required for workflow (default:30)')
 
@@ -1395,8 +1398,10 @@ def main():
 	GENOME_ID = '_'.join(Arguments.reads1.split('/')[-1].split('.')[0].split('_')[0:-1])
 	LOG_FILE = cwd + "/" + GENOME_ID + ".log"
 	REPORT_FILE = GENOME_ID + "_report.txt"
-	FINAL_OUTPUT_DIRECTORY = "/mnt/NAS/NASBIO1/DATA/GAMeR_DB/" + Arguments.genus.upper() + '/' + GENOME_ID
-	ADAPTATERS_FILE = "/mnt/NAS/NASBIO1/DATA/all_known_iontorrent-Illumina.fa"
+	if Arguments.NASBIO1_PATH[-1] == '/' :
+		Arguments.NASBIO1_PATH = Arguments.NASBIO1_PATH[0:-1]
+	FINAL_OUTPUT_DIRECTORY = Arguments.NASBIO1_PATH + "/DATA/GAMeR_DB/" + Arguments.genus.upper() + '/' + GENOME_ID
+	ADAPTATERS_FILE = Arguments.NASBIO1_PATH + "/DATA/all_known_iontorrent-Illumina.fa"
 
 	#Retrieve Python command
 	command=""

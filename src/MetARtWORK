@@ -17,6 +17,9 @@ def get_parser():
 	parser.add_argument('-i', action="store", dest='TSV',
 						type=str, required=True, help="TSV file with 'Genus', 'Species', 'ID', 'Projet', 'Supplier', 'Center', and 'Technology' fields.")
 
+	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
+						type=str, default="~/NASBIO1", help='NASBIO1 path (default:~/NASBIO1)')
+
 	parser.add_argument('-minCov', action="store", dest='minCov',
 						type=int, default=30, help='minimum coverage required for workflow (default:30)')
 
@@ -52,7 +55,7 @@ def main():
 	
 	Arguments=parser.parse_args()	
 
-	PREFIX = "/mnt/NAS/NASBIO1/PROJETS/"
+	PREFIX = Arguments.NASBIO1_PATH + "/PROJETS/"
 	SUFFIX1 = "_R1.fastq.gz"
 	SUFFIX2 = "_R2.fastq.gz"
 
@@ -85,6 +88,7 @@ def main():
 			reads2Path = PREFIX + Genus + '/' + Projet + "/data/" + ID + SUFFIX2
 
 			cmd = "ARtWORK " + \
+			" -n " + Arguments.NASBIO1_PATH = \
 			" -1 " + reads1Path + \
 			" -2 " + reads2Path + \
 			" -g " + Genus + \
