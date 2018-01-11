@@ -55,6 +55,9 @@ def main():
 	
 	Arguments=parser.parse_args()	
 
+	if Arguments.NASBIO1_PATH[-1] == '/' :
+		Arguments.NASBIO1_PATH = Arguments.NASBIO1_PATH[0:-1]
+
 	PREFIX = Arguments.NASBIO1_PATH + "/PROJETS/"
 	SUFFIX1 = "_R1.fastq.gz"
 	SUFFIX2 = "_R2.fastq.gz"
