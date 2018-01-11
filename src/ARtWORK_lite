@@ -967,16 +967,6 @@ def main():
 	REPORT.write("++++++++++++++++++++++++++++++++++++++++ DATASET REPORT  ++++++++++++++++++++++++++++++++++++++++\n" + \
 	"GENERATED " + time.strftime("%d/%m/%Y") + ' AT ' + time.strftime("%H:%M:%S") + '\n' + \
 	"READS : \n" + Arguments.reads1.split('/')[-1] + "\n" + Arguments.reads2.split('/')[-1] + '\n' + \
-	"GENUS : " + Arguments.genus + '\n' + \
-	"SP : " + Arguments.species + '\n' + \
-	"\n"+ \
-	"++++++++++++++++++++++++++++++++++++++++ \n" + \
-	"+                 METADATA             +\n" + \
-	"++++++++++++++++++++++++++++++++++++++++ \n\n" + \
-	"Supplied by : " + Arguments.supplier + '\n' +\
-	"Sequencing center : " + Arguments.center + '\n' + \
-	"Sequencing technology : " + Arguments.technology + '\n' + \
-	"Projet id : " + Arguments.projetID + '\n' + \
 	"\n"+ \
 	"++++++++++++++++++++++++++++++++++++++++ \n" + \
 	"+             KEY PARAMETERS           +\n" + \
