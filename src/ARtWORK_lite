@@ -958,7 +958,6 @@ def main():
 
 	# Check GENOME_ID
 	check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, LOG_FILE)
-	check_MongoDB_exist(GENOME_ID, Arguments.genus, LOG_FILE)
 
 	# Make final directory 
 	os.makedirs(FINAL_OUTPUT_DIRECTORY)
