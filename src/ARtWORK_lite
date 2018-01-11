@@ -274,7 +274,7 @@ def normalization(reads1, reads2, targetCov, nbThreads, Gid, logFilepath, report
 	return reads1_normalized, reads2_normalized
     
 
-def Check_coverage(reads1,reads2,genus,minCov,nbThreads,maxMemory,workdir,logFilepath,reportFilepath):
+def Check_coverage(reads1,reads2,minCov,nbThreads,maxMemory,workdir,logFilepath,reportFilepath,reference):
     
     os.system('echo "\n************************** QUALITY CONTROL (Check coverage) : START **************************\n" >> '+ logFilepath)
 
@@ -283,9 +283,6 @@ def Check_coverage(reads1,reads2,genus,minCov,nbThreads,maxMemory,workdir,logFil
 
     logFile = open(logFilepath, "a")
     logFile.write("Retrieving default reference...")
-
-    #Get default reference before mapping accorded to this reference
-    reference=get_default_reference(genus,workdir,logFilepath)
 
     logFile.write("...ok\n")
 
@@ -784,11 +781,11 @@ def rename_contig(fasta_file, genome_id,logFilepath):
 	return rename_fastaFile_name	
 
 
-def annotation(fasta_file, genome_id, genus, nbThreads, logFilepath):
+def annotation(fasta_file, genome_id, nbThreads, logFilepath):
 
 	os.system('echo "\n************************** GENOME ANNOTATION : START **************************\n" >> '+ logFilepath)
 
-	cmd = "prokka --fast --genus " + genus + " --prefix annotation" + \
+	cmd = "prokka --fast --prefix annotation" + \
 	" -cpus " + str(nbThreads) + " " + fasta_file
 	cmd = cmd + " >> " + logFilepath + " 2>&1"
 
@@ -1030,7 +1027,7 @@ def main():
 	##########################################
 	
 	print "Step 3/16 ---> quality control"
-	coverage = Check_coverage(Arguments.reads1,Arguments.reads2,Arguments.genus,Arguments.minCov,Arguments.nbThreads,Arguments.maxMemory,cwd,LOG_FILE,REPORT_FILE)
+	coverage = Check_coverage(Arguments.reads1,Arguments.reads2,Arguments.minCov,Arguments.nbThreads,Arguments.maxMemory,cwd,LOG_FILE,REPORT_FILE,Arguments.RefScaffold)
 
 
 	##########################################
@@ -1062,7 +1059,7 @@ def main():
 
 	print "Step 6/16 ---> iVARCall"
 
-	VCF_FILE = commande_iVARCAll(Arguments.genus, Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
+	VCF_FILE = commande_iVARCAll(Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
 		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.RefVariant)
 
 
@@ -1140,7 +1137,7 @@ def main():
 
 	print "Step 14/16 ---> Genome annotation"
 
-	GBK, GFF = annotation(ASSEMBLY, GENOME_ID, Arguments.genus, Arguments.nbThreads, LOG_FILE)
+	GBK, GFF = annotation(ASSEMBLY, GENOME_ID, Arguments.nbThreads, LOG_FILE)
 
 
 	##########################################
