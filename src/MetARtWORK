@@ -88,7 +88,7 @@ def main():
 			reads2Path = PREFIX + Genus + '/' + Projet + "/data/" + ID + SUFFIX2
 
 			cmd = "ARtWORK " + \
-			" -n " + Arguments.NASBIO1_PATH = \
+			" -n " + Arguments.NASBIO1_PATH + \
 			" -1 " + reads1Path + \
 			" -2 " + reads2Path + \
 			" -g " + Genus + \
