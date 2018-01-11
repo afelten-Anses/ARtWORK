@@ -76,10 +76,10 @@ def main():
 			line = line.rstrip()
 			line = line.split("\t")
 
-			Genus = line[0]
-			Species = line[1]
-			ID = line[2]
-			Projet = line[3]
+			Genus = line[0].replace(' ','')
+			Species = line[1].replace(' ','')
+			ID = line[2].replace(' ','')
+			Projet = line[3].replace(' ','')
 			Supplier = line[4]
 			Center = line[5]
 			Technology = line[6]
