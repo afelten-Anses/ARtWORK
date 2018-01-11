@@ -34,6 +34,9 @@ def get_parser():
 	parser.add_argument('-2', action="store", dest='reads2',
 						type=str, required=True, help='Fastq file pair 2 with \'_R2\' (REQUIRED)')
 
+	parser.add_argument('-ad', action="store", dest='ADAPTATERS',
+						type=str, required=True, help='Sequencing adaptaters file (REQUIRED)')
+
 	parser.add_argument('-minCov', action="store", dest='minCov',
 						type=int, default=30, help='minimum coverage required for workflow (default:30)')
 
@@ -940,7 +943,7 @@ def main():
 	LOG_FILE = cwd + "/" + GENOME_ID + ".log"
 	REPORT_FILE = GENOME_ID + "_report.txt"
 	FINAL_OUTPUT_DIRECTORY = GENOME_ID
-	ADAPTATERS_FILE = "/mnt/NAS/NASBIO1/DATA/all_known_iontorrent-Illumina.fa"
+	ADAPTATERS_FILE = Arguments.ADAPTATERS
 
 	#Retrieve Python command
 	command=""
