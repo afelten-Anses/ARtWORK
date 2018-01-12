@@ -109,9 +109,9 @@ class sample(object) :
 
 		os.system("mv " + self.report + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
 		
-		os.system("mv " + self.reads1 + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+		os.system("cp " + self.reads1 + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
 
-		os.system("mv " + self.reads2 + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
+		os.system("cp " + self.reads2 + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
 
 		os.system("mv " + self.reads1QC + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
 
@@ -1169,9 +1169,9 @@ def main():
 	os.system("mv " + GENOME_ID + ".log " + FINAL_OUTPUT_DIRECTORY + "/.")
 
 	# Remove tmp files and directories
-	os.system("rm -r   temp reference_scaffolding Assembly \
-		fastqc contigs.fasta* scaffolds.fasta stats annotation trashReads.fastq \
-		reference_gff")
+	os.system("rm -r   temp Assembly \
+		fastqc contigs.fasta* *scaffold*.fasta* stats annotation trashReads.fastq \
+		 *_iVARCALL " + GENOME_ID + "_R*.fastq " + GENOME_ID + "_paried_R*.fq")
 
 
 if __name__ == "__main__":
