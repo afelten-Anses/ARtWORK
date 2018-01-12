@@ -1169,7 +1169,7 @@ def main():
 	os.system("mv " + GENOME_ID + ".log " + FINAL_OUTPUT_DIRECTORY + "/.")
 
 	# Remove tmp files and directories
-	os.system("rm -r  " + GENOME_ID + "* temp reference_scaffolding Assembly \
+	os.system("rm -r   temp reference_scaffolding Assembly \
 		fastqc contigs.fasta* scaffolds.fasta stats annotation trashReads.fastq \
 		reference_gff")
 
