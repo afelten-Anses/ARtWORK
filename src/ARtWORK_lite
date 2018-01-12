@@ -1144,12 +1144,12 @@ def main():
 	#	          Save results          	 #
 	##########################################
 
-	print "Step 15/16 ---> Moving files and add to mongoDB"
+	print "Step 15/16 ---> Moving files"
 
 	sampleObjet = sample(GENOME_ID, REPORT_FILE, \
 		Arguments.reads1, Arguments.reads2, readsLen, FASTQC_R1, FASTQC_R2, \
 		ASSEMBLY, CONTIGS, QUAST, GBK, GFF, \
-		RESULT_ST, MLST_id, VCF_FILE)
+		VCF_FILE)
 	sampleObjet.moveFiles(FINAL_OUTPUT_DIRECTORY)
 
 
