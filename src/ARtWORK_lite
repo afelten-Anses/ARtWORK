@@ -474,7 +474,7 @@ def commande_iVARCAll(reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, wor
     iVARCall_log_parser(iVARCAll_log, VCF_file, reference, report)
 
     shutil.rmtree(Gid + "_iVARCAll/BAM") # remove BAM folder
-    shutil.rmtree("reference_iVARCAll") # remove reference folder
+    #shutil.rmtree("reference_iVARCAll") # remove reference folder
     
     os.system('echo "\n************************** iVARCall2 WORKFLOW : END **************************\n" >> '+ logFilepath)
 
