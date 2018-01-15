@@ -43,6 +43,12 @@ def get_parser():
 	parser.add_argument('-s', action="store", dest='species',
 						type=str, required=True, help='species (REQUIRED)')
 
+	parser.add_argument('-Mu', action="store", dest='MongoUser', 
+						type=str, required=True, help='MongoDb username (REQUIRED)')
+
+	parser.add_argument('-Mp', action="store", dest='MongoPassword', 
+						type=str, required=True, help='MongoDb password (REQUIRED)')
+
 	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
 						type=str, default="~/NASBIO1", help='NASBIO1 path (default:~/NASBIO1)')
 
@@ -183,9 +189,10 @@ class sample(object) :
 		return reads	
 
 
-	def insertMongo(self):
+	def insertMongo(self, MongoUser, MongoPassword):
 		
-		client = MongoClient('localhost', 27017)
+		client = MongoClient('localhost', username=MongoUser, \
+			password=MongoPassword, authSource="GAMeRdb", authMechanism='SCRAM-SHA-1')
 		db = client.GAMeRdb
 		genomes = db.GENOME
 
@@ -1649,7 +1656,7 @@ def main():
 		Arguments.technology, ASSEMBLY, CONTIGS, QUAST, GBK, GFF, Arguments.genus, \
 		Arguments.species, RESULT_ST, MLST_id, VCF_FILE)
 	sampleObjet.moveFiles(FINAL_OUTPUT_DIRECTORY)
-	sampleObjet.insertMongo()
+	sampleObjet.insertMongo(Arguments.MongoUser, Arguments.MongoPassword)
 
 
 	##########################################

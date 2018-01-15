@@ -15,7 +15,13 @@ def get_parser():
 
 
 	parser.add_argument('-i', action="store", dest='TSV',
-						type=str, required=True, help="TSV file with 'Genus', 'Species', 'ID', 'Projet', 'Supplier', 'Center', and 'Technology' fields.")
+						type=str, required=True, help="TSV file with 'Genus', 'Species', 'ID', 'Projet', 'Supplier', 'Center', and 'Technology' fields (REQUIRED)")
+
+	parser.add_argument('-Mu', action="store", dest='MongoUser', 
+						type=str, required=True, help='MongoDb username (REQUIRED)')
+
+	parser.add_argument('-Mp', action="store", dest='MongoPassword', 
+						type=str, required=True, help='MongoDb password (REQUIRED)')
 
 	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
 						type=str, default="~/NASBIO1", help='NASBIO1 path (default:~/NASBIO1)')
@@ -91,6 +97,8 @@ def main():
 			reads2Path = PREFIX + Genus + '/' + Projet + "/data/" + ID + SUFFIX2
 
 			cmd = "ARtWORK " + \
+			" -Mu " + Arguments.MongoUser + \
+			" -Mp " + Arguments.MongoPassword + \
 			" -n " + Arguments.NASBIO1_PATH + \
 			" -1 " + reads1Path + \
 			" -2 " + reads2Path + \
