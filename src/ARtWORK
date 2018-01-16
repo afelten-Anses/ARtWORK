@@ -319,12 +319,13 @@ def check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, logFilepath):
 	logFile.close()
 
 
-def check_MongoDB_exist(GENOME_ID, genus, logFilepath):
+def check_MongoDB_exist(GENOME_ID, genus, logFilepath, MongoUser, MongoPassword):
 	
 	logFile = open(logFilepath, "a")
 	logFile.write("Check if genome already id exists in  database...")
 
-	client = MongoClient('localhost', 27017)
+	client = MongoClient('localhost', username=MongoUser, \
+			password=MongoPassword, authSource="GAMeRdb", authMechanism='SCRAM-SHA-1')
 	db = client.GAMeRdb
 	genomes = db.GENOME
 
@@ -1423,7 +1424,7 @@ def main():
 
 	# Check GENOME_ID
 	check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, LOG_FILE)
-	check_MongoDB_exist(GENOME_ID, Arguments.genus, LOG_FILE)
+	check_MongoDB_exist(GENOME_ID, Arguments.genus, LOG_FILE, Arguments.MongoUser, Arguments.MongoPassword)
 
 	# Make final directory 
 	os.makedirs(FINAL_OUTPUT_DIRECTORY)
