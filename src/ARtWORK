@@ -193,7 +193,7 @@ class sample(object) :
 		
 		#client = MongoClient('localhost', username=MongoUser, \
 		#	password=MongoPassword, authSource="GAMeRdb", authMechanism='SCRAM-SHA-1')
-		uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@localhost/GAMeRdb?authMechanism=SCRAM-SHA-1"
+		uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@localhost/GAMeRdb"
 		client = MongoClient(uri)
 		db = client.GAMeRdb
 		genomes = db.GENOME
@@ -328,7 +328,7 @@ def check_MongoDB_exist(GENOME_ID, genus, logFilepath, MongoUser, MongoPassword)
 
 	#client = MongoClient('localhost', username=MongoUser, \
 	#		password=MongoPassword, authSource="GAMeRdb", authMechanism='SCRAM-SHA-1')
-	uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@localhost/GAMeRdb?authMechanism=SCRAM-SHA-1"
+	uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@localhost/GAMeRdb"
 	client = MongoClient(uri)
 	db = client.GAMeRdb
 	genomes = db.GENOME
