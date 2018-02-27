@@ -61,9 +61,6 @@ def get_parser():
 	parser.add_argument('-m', action="store", dest='maxMemory', 
 						type=int, default=4000, help='max memory to use in Mb (default:4000)')
 
-	parser.add_argument('-w', action="store", dest='workdir', 
-						type=str, default='.', help='working directory (default:current directory)')
-
 	parser.add_argument('-a', action="store", dest='min_mapped_scaffold_percent', 
 						type=int, default=80, help='minimum percent of total scaffold length \
 						mapped on reference, used to detect contaminants (default:80)')
@@ -860,7 +857,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 	os.system("rm " + reference + ".*")
 
 	tmp_sam_file2 = "check_scaffold_coverage_mapped.sam"
-	os.system("samtools view -F 4 " + tmp_sam_file + " > " + tmp_sam_file2)
+	os.system("samtools view -S -F 4 " + tmp_sam_file + " > " + tmp_sam_file2)
 
 	sam_file = open(tmp_sam_file2, 'r')
 	lines = sam_file.readlines()
@@ -930,8 +927,6 @@ def main():
 	print "Step 1/16 ---> Initialisation"
 
 	# Go to working directory gived by Arguments.workdir
-	if(Arguments.workdir != '.'):
-		os.chdir(Arguments.workdir)	
 
 	cwd = os.getcwd() #Current working directory FULL path	
 

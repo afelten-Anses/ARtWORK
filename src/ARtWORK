@@ -1331,7 +1331,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 	os.system("rm " + reference + ".*")
 
 	tmp_sam_file2 = "check_scaffold_coverage_mapped.sam"
-	os.system("samtools view -F 4 " + tmp_sam_file + " > " + tmp_sam_file2)
+	os.system("samtools view -S -F 4 " + tmp_sam_file + " > " + tmp_sam_file2)
 
 	sam_file = open(tmp_sam_file2, 'r')
 	lines = sam_file.readlines()
