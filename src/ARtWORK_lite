@@ -1166,7 +1166,7 @@ def main():
 	# Remove tmp files and directories
 	os.system("rm -r   temp Assembly \
 		fastqc contigs.fasta* *scaffold*.fasta* stats annotation trashReads.fastq \
-		 *_iVARCALL " + GENOME_ID + "_R*.fastq " + GENOME_ID + "_paried_R*.fq")
+		 *_iVARCAll " + GENOME_ID + "*.fastq* " + GENOME_ID + "_paired_R*.fq RefScaffold")
 
 
 if __name__ == "__main__":
