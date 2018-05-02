@@ -18,7 +18,28 @@ import patoolib
 
 
 __doc__="""
-
+@requires: BWA
+@requires: samtools
+@requires: picard-tools
+@requires: Trimmomatic
+@requires: GATK
+@requires: SnpSift
+@requires: iVARCall2
+@requires: bgzip
+@requires: tabix
+@requires: vcf-merge
+@requires: Vcf.pm (vcftools)
+@requires: MongoDB
+@requires: bbnorm
+@requires: bbmap
+@requires: fastqc
+@requires: mlst
+@requires: spades
+@requires: quast
+@requires: medusa
+@requires: mash
+@requires: gmcloser
+@requires: prokka
 """
 
 def get_parser():
