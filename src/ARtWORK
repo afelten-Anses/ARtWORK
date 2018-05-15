@@ -71,7 +71,7 @@ def get_parser():
 						type=str, required=True, help='MongoDb password (REQUIRED)')
 
 	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
-						type=str, default="~/NASBIO1", help='NASBIO1 path (default:~/NASBIO1)')
+						type=str, default="~/NASBIO1", help='NASBIO1/bio path (default:~/NASBIO1)')
 
 	parser.add_argument('-minCov', action="store", dest='minCov',
 						type=int, default=30, help='minimum coverage required for workflow (default:30)')
@@ -101,6 +101,26 @@ def get_parser():
 	parser.add_argument('-d', action="store", dest='max_len_diff', 
 						type=int, default=30, help='maximum percent of length difference \
 						between assembly and reference (default:20)')
+
+	parser.add_argument('-trimmomatic', action="store", dest='trimmomatic_path', 
+						type=str, default='/opt/Trimmomatic/0.33/trimmomatic-0.33.jar', help='Trimmomatic jar path \
+						(default:/opt/Trimmomatic/0.33/trimmomatic-0.33.jar)')	
+
+	parser.add_argument('-medusa', action="store", dest='medusa_path', 
+						type=str, default='/opt/medusa/1.0/medusa.jar', help='medusa jar path \
+						(default:/opt/medusa/1.0/medusa.jar)')		
+
+	parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', 
+						type=str, default='/opt/medusa/1.0/medusa_scripts/', help='medusa scripts path \
+						(default:/opt/medusa/1.0/medusa_scripts/)')		
+
+	parser.add_argument('-GATK', action="store", dest='GATK_path', 
+						type=str, default='/opt/GATK/3.7.0/GenomeAnalysisTK.jar', help='GATK jar path \
+						(default:/opt/GATK/3.7.0/GenomeAnalysisTK.jar)')	
+
+	parser.add_argument('-picard', action="store", dest='picard_path', 
+						type=str, default='/opt/picard-tools/1.133/picard.jar', help='picard-tools jar path \
+						(default:/opt/picard-tools/1.133/picard.jar)')																						
 
 	parser.add_argument('--supplier', action="store", dest='supplier', 
 						type=str, default='Anses', help='Supplier (default:Anses)')
@@ -458,7 +478,7 @@ def normalization(reads1, reads2, targetCov, nbThreads, Gid, logFilepath, report
 	return reads1_normalized, reads2_normalized
     
 
-def Check_coverage(reads1,reads2,genus,minCov,nbThreads,maxMemory,workdir,logFilepath,reportFilepath):
+def Check_coverage(reads1, reads2, genus, minCov, nbThreads, maxMemory, workdir, logFilepath, reportFilepath, NASBIO1_path):
     
     os.system('echo "\n************************** QUALITY CONTROL (Check coverage) : START **************************\n" >> '+ logFilepath)
 
@@ -469,7 +489,7 @@ def Check_coverage(reads1,reads2,genus,minCov,nbThreads,maxMemory,workdir,logFil
     logFile.write("Retrieving default reference...")
 
     #Get default reference before mapping accorded to this reference
-    reference=get_default_reference(genus,workdir,logFilepath)
+    reference=get_default_reference(genus,workdir,logFilepath, NASBIO1_path)
 
     logFile.write("...ok\n")
 
@@ -531,7 +551,7 @@ def Check_coverage(reads1,reads2,genus,minCov,nbThreads,maxMemory,workdir,logFil
     return int(float(coverage))
 
 
-def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, Gid, workdir, report, logFilepath):
+def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, Gid, workdir, report, logFilepath, trimmomatic_path):
 	
 	os.system('echo "************************** TRIMMING WORKFLOW : START ************************** " >> '+ logFilepath)
 
@@ -553,7 +573,7 @@ def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, 
 
 	os.system('echo "Trimmomatic started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
-	command = "java -jar " + str(Maxmemoryg) + " /opt/Trimmomatic/0.33/trimmomatic-0.33.jar PE -threads " + \
+	command = "java -jar " + str(Maxmemoryg) + " " + trimmomatic_path + " PE -threads " + \
 	str(nbThreads) + " -phred33 " + reads1 + " " + reads2 + " " + forward_paired + " " + \
 	forward_unpaired + " " + reverse_paired + " " + reverse_unpaired + \
 	" ILLUMINACLIP:" + adaptaters + ":2:" + str(phredscore) + ":15 " + \
@@ -633,7 +653,7 @@ def Fastqc(reads1, reads2, adaptators, outputName, nbThreads, workdir, logFilepa
 	return listResult
 
 
-def get_default_reference(genus,workdir,logFilepath):
+def get_default_reference(genus, workdir, logFilepath, NASBIO1_path):
 	
 	#DO NOT generate log for this function : it will be generated in its calling function
 
@@ -644,25 +664,25 @@ def get_default_reference(genus,workdir,logFilepath):
 		#retrieving reference filename
 		reference_filename = "Typhimurium_LT2_AE006468.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j /mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Typhimurium_LT2_AE006468.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
+		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Salmonella/Typhimurium_LT2_AE006468.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
 
 	elif(genus == "Listeria"):
 		#retrieving reference filename
 		reference_filename = "Listeria_monocytogenes_strain_EGD-e.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j /mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/EGD-e.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
+		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Listeria/EGD-e.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
 
 	elif(genus == "Staphylococcus"):
 		#retrieving reference filename
 		reference_filename = "Staphylococcus_aureus_NC_007795.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j /mnt/NAS/NASBIO1/DATA/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
+		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
 	
 	elif(genus == "Clostridium"):
 		#retrieving reference filename
 		reference_filename = "CP000246.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j /mnt/NAS/NASBIO1/DATA/REFERENCES/Clostridium/CP000246.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes	
+		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Clostridium/CP000246.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes	
 
 	else:	
 		logFile = open(logFilepath, "a")
@@ -684,13 +704,14 @@ def get_default_reference(genus,workdir,logFilepath):
 		sys.exit(1)
 
 
-def commande_iVARCAll(genus, reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir,logFilepath, report):
+def commande_iVARCAll(genus, reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir, logFilepath, report, NASBIO1_path, \
+trimmomatic_path, GATK_path, picard_path):
 
     os.system('echo "\n************************** iVARCall2 WORKFLOW : START **************************\n" >> '+ logFilepath)
 
     logFile = open(logFilepath, "a")
     logFile.write("Get default reference...")
-    reference = get_default_reference(genus,workdir,logFilepath)
+    reference = get_default_reference(genus,workdir,logFilepath, NASBIO1_path)
     logFile.write("...ok\n")
     
 
@@ -698,6 +719,7 @@ def commande_iVARCAll(genus, reads1, reads2, adaptaters, nbThreads, maxMemory, G
 
     cmd="iVARCall2 -ref " + reference + " -reads " + reads1 + " " + reads2 + \
         " -a " + adaptaters + " -o " + Gid + "_iVARCAll -T " + str(nbThreads) + " -m " + str(maxMemory) + \
+		" -TRIMJAR " + trimmomatic_path + " -GATKJAR " + GATK_path + " -PICARDJAR " + picard_path + \
         " --removeDuplicates --indelRealigner --removeTmpFiles --onlyVCF" + " >> " + logFilepath + " 2>&1"
     
     logFile.write("\n" + cmd + "\n")
@@ -818,7 +840,7 @@ def number_of_reads(reads_file):
 	return nbReads/4 #fastqfile = 4 lines per read
 
 
-def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus):
+def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus, NASBIO1_path):
 	
 	os.system('echo "\n************************** MLST WORKFLOW : START **************************\n" >> '+ logFilepath)
 
@@ -855,7 +877,7 @@ def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus):
 
 	if(genus == "Salmonella"):
 		logFile.write("get serovar from ST Salmonella...")
-		RESULT_SEROVAR = get_serovar_from_ST_Salmonella(RESULT_ST)
+		RESULT_SEROVAR = get_serovar_from_ST_Salmonella(RESULT_ST, NASBIO1_path)
 		logFile.write("...ok")
 		report_file.write("\nPREDICTED SEROVAR : " + RESULT_SEROVAR + "\n")
 		RESULT_SEROVAR = RESULT_SEROVAR.split(' ')[0] # keep only serovar name
@@ -864,7 +886,7 @@ def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus):
 
 	elif(genus == "Listeria"):
 		logFile.write("get CC from ST Listeria...")
-		RESULT_CC = get_CC_from_ST_Listeria(RESULT_ST)
+		RESULT_CC = get_CC_from_ST_Listeria(RESULT_ST, NASBIO1_path)
 		logFile.write("...ok")
 		report_file.write("\nPREDICTED CLONAL COMPLEX : " + RESULT_CC + "\n\n\n")
 		RESULT_MLST.append(RESULT_CC)
@@ -880,9 +902,9 @@ def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus):
 	return RESULT_MLST
 
 
-def get_CC_from_ST_Listeria(ST):
+def get_CC_from_ST_Listeria(ST, NASBIO1_path):
 
-	tabFile = open("/mnt/NAS/NASBIO1/DATA/MLST_DATA/Listeria/profile.txt",'r')
+	tabFile = open(NASBIO1_path + "/DATA/MLST_DATA/Listeria/profile.txt",'r')
 	lines = tabFile.readlines()
 	tabFile.close()
 
@@ -895,9 +917,9 @@ def get_CC_from_ST_Listeria(ST):
 	return 'unknown'		
 
 
-def get_serovar_from_ST_Salmonella(ST):
+def get_serovar_from_ST_Salmonella(ST, NASBIO1_path):
 
-	tabFile = open("/mnt/NAS/NASBIO1/DATA/MLST_DATA/Salmonella/mlst_lookup.txt",'r')
+	tabFile = open(NASBIO1_path + "/DATA/MLST_DATA/Salmonella/mlst_lookup.txt",'r')
 	lines = tabFile.readlines()
 	tabFile.close()
 
@@ -1036,16 +1058,19 @@ def TrimContigsByLen(fasta_file, min_length,logFilepath): #In order to do not ke
     return fasta_file + "_trimmed.fasta"
 
 
-def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory):
+def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory, medusa_path, medusa_scripts_path):
 
 	os.system('echo "\n************************** SCAFFOLDING WORKFLOW : START **************************\n" >> '+ logFilepath)
+
+	if medusa_scripts_path[-1] != '/' :
+		medusa_scripts_path = medusa_scripts_path + '/'
 
 	Maxmemoryg=Get_maxMemoryg(maxMemory) 
 	scaffold_file = Gid + "_scaffold.fasta"
 	
 	os.system('echo "Scaffolding started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath )
 
-	cmd = "java " + Maxmemoryg + " -jar /opt/medusa/1.0/medusa.jar -d -w2 -scriptPath /opt/medusa/1.0/medusa_scripts/ " + \
+	cmd = "java " + Maxmemoryg + " -jar " + medusa_path + " -d -w2 -scriptPath " + medusa_scripts_path + \
 		" -i " + contigs_file + " -o " + scaffold_file + " -f " + referencepath + " >> " + logFilepath + " 2>&1"
 
 	logFile = open(logFilepath, "a")
@@ -1135,7 +1160,7 @@ def get_scaffolding_reference(genus, MLST_id,logFilepath, report):
 	return reference_fasta,fasta_ref_path,reference_gff.rstrip()
 """
 
-def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
+def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath, NASBIO1_path):
 
 	logFile = open(logFilepath, "a")
 	logFile.write("Get scaffolding reference with Mash...")
@@ -1143,7 +1168,7 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath):
 	os.system("mkdir mash_genome_db")
 	os.mkdir("reference_scaffolding")
 	os.mkdir("reference_gff")
-	os.system("cp /mnt/NAS/NASBIO1/DATA/REFERENCES/" + genus + "/*zip mash_genome_db/.")
+	os.system("cp " + NASBIO1_path + "/DATA/REFERENCES/" + genus + "/*zip mash_genome_db/.")
 	os.system("unzip \'mash_genome_db/*.zip\' \'*.fasta\' -d mash_genome_db/")
 	os.system("unzip \'mash_genome_db/*.zip\' \'*.gff3\' -d reference_gff/")
 	os.system("rm mash_genome_db/*zip mash_genome_db/*_prot.fasta")
@@ -1532,7 +1557,8 @@ def main():
 	##########################################
 	
 	print "Step 3/16 ---> quality control"
-	coverage = Check_coverage(Arguments.reads1,Arguments.reads2,Arguments.genus,Arguments.minCov,Arguments.nbThreads,Arguments.maxMemory,cwd,LOG_FILE,REPORT_FILE)
+	coverage = Check_coverage(Arguments.reads1,Arguments.reads2,Arguments.genus,Arguments.minCov,Arguments.nbThreads,Arguments.maxMemory,\
+	cwd,LOG_FILE,REPORT_FILE, Arguments.NASBIO1_PATH)
 
 
 	##########################################
@@ -1565,7 +1591,8 @@ def main():
 	print "Step 6/17 ---> iVARCall"
 
 	VCF_FILE = commande_iVARCAll(Arguments.genus, Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
-		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE)
+		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.NASBIO1_PATH, \
+		Arguments.trimmomatic_path, Arguments.GATK_path, Arguments.picard_path)
 
 
 	##########################################
@@ -1573,7 +1600,8 @@ def main():
 	##########################################
 
 	print "Step 7/17 ---> Trimming"
-	reads_trim =  soft_trimming(Arguments.reads1, Arguments.reads2, ADAPTATERS_FILE, Arguments.nbThreads, Arguments.maxMemory, Arguments.minPhredScore, GENOME_ID, cwd, REPORT_FILE, LOG_FILE)
+	reads_trim =  soft_trimming(Arguments.reads1, Arguments.reads2, ADAPTATERS_FILE, Arguments.nbThreads, Arguments.maxMemory, \
+	Arguments.minPhredScore, GENOME_ID, cwd, REPORT_FILE, LOG_FILE, Arguments.trimmomatic_path)
 	
 	reads1_trim = reads_trim[0]
 	reads2_trim = reads_trim[1]
@@ -1595,7 +1623,7 @@ def main():
 	print "Step 9/17 ---> MLST"
 
 	if(Arguments.genus != "Clostridium"):
-		MLST_result = MSLT_analysis(CONTIGS, Arguments.nbThreads, LOG_FILE, REPORT_FILE, Arguments.genus)
+		MLST_result = MSLT_analysis(CONTIGS, Arguments.nbThreads, LOG_FILE, REPORT_FILE, Arguments.genus, Arguments.NASBIO1_PATH)
 		RESULT_ST = MLST_result[0]
 
 		if(Arguments.genus == "Salmonella"):
@@ -1621,8 +1649,9 @@ def main():
 	print "Step 10/17 ---> Scaffolding"
 
 	#new_reference,new_reference_directory, GFFref = get_scaffolding_reference(Arguments.genus, MLST_id,LOG_FILE, REPORT_FILE)
-	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(CONTIGS, Arguments.genus, REPORT_FILE, LOG_FILE)
-	scaffold = scaffolding(CONTIGS, new_reference_directory, GENOME_ID, LOG_FILE, Arguments.maxMemory)
+	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(CONTIGS, Arguments.genus, REPORT_FILE, LOG_FILE, Arguments.NASBIO1_PATH)
+	scaffold = scaffolding(CONTIGS, new_reference_directory, GENOME_ID, LOG_FILE, Arguments.maxMemory, \
+	Arguments.medusa_path , Arguments.medusa_scripts_path)
 
 
 	##########################################
@@ -1649,7 +1678,8 @@ def main():
 
 	print "Step 13/17 ---> Assembly control"
 
-	check_scaffold_coverage(scaffold, new_reference, Arguments.min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE, Arguments.max_len_diff)
+	check_scaffold_coverage(scaffold, new_reference, Arguments.min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE, \
+	Arguments.max_len_diff)
 	QUAST = Assembly_control(scaffold, new_reference, Arguments.minContigLen, GFFref, cwd, LOG_FILE, Arguments.nbThreads)
 	
 
