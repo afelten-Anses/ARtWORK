@@ -98,6 +98,12 @@ def get_parser():
 						type=int, default=80, help='minimum percent of total scaffold length \
 						mapped on reference, used to detect contaminants (default:80)')
 
+	parser.add_argument('-Ksize', action="store", dest='Ksize', 
+						type=str, default='15', help='Kmer size for mash (default:15)')	
+
+	parser.add_argument('-Ssize', action="store", dest='Ssize', 
+						type=str, default='1000', help='Sketch size for mash (default:15)')										
+
 	parser.add_argument('-d', action="store", dest='max_len_diff', 
 						type=int, default=30, help='maximum percent of length difference \
 						between assembly and reference (default:20)')
@@ -145,7 +151,7 @@ class sample(object) :
 	def __init__(self, SampleID, supplier, projetID, report, \
 		reads1Path, reads2Path, readsLen, reads1QC, reads2QC, center, technology, \
 		assembly, contigs, QUAST, GBK, GFF, \
-		genus, species, ST, MLST_id, VCF):
+		genus, species, ST, MLST_id, VCF, sketch):
 		"""
 		Initialize the sample class
 		"""
@@ -170,6 +176,7 @@ class sample(object) :
 		self.QUAST = QUAST
 		self.GBK = GBK
 		self.GFF = GFF
+		self.sketch = sketch
 
 		self.genus = genus
 		self.species = species
@@ -220,6 +227,8 @@ class sample(object) :
 		os.system("mv " + self.VCF + '* ' + FINAL_OUTPUT_DIRECTORY + "/.")
 		self.VCF = mongo_output + self.VCF.split("/")[-1]
 
+		os.system("mv " + self.sketch + FINAL_OUTPUT_DIRECTORY + "/.")
+		self.sketch = mongo_output + self.sketch.split("/")[-1]
 
 	def compressReads(self, reads):	
 
@@ -260,7 +269,8 @@ class sample(object) :
 				"Contigs":self.contigs,
 				"QUAST":self.QUAST+"/report.html",
 				"GBK":self.GBK,
-				"GFF":self.GFF
+				"GFF":self.GFF,
+				"Sketch":self.sketch
 			},
 			"Phylogeny":{
 				"Genus":self.genus,
@@ -304,6 +314,7 @@ class sample(object) :
 		print "QUAST path : " + self.QUAST
 		print "GBK path : " + self.GBK
 		print "GFF path : " + self.GFF
+		print "Sketch path : " + self.sketch
 
 		print "Genus : " + self.genus
 		print "Species : " + self.species
@@ -1264,7 +1275,7 @@ def CloseGaps(scaffold, contigs, read1, read2, nbThreads, Gid, readsLen, logFile
 	return CloseGapsFile
 
 
-def rename_contig(fasta_file, genome_id,logFilepath):
+def rename_contig(fasta_file, genome_id, logFilepath):
 
 	os.system('echo "\n************************** RENAME CONTIGS : START **************************\n" >> '+ logFilepath)
 
@@ -1422,6 +1433,19 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 
 		sys.exit(1)
 
+
+def make_mash_sketch(assembly, nbThreads, genome_id, Kmer_size, Sketch_size, logFilepath):
+
+	cmd = "mash sketch -p " + str(nbThreads) + " -k " + Kmer_size + " -s " + Sketch_size + " -r -o " + genome_id + " " + assembly
+	cmd = cmd + " >> " + logFilepath + " 2>&1"
+
+	logFile = open(logFilepath, "a")
+	logFile.write("\n" + cmd + "\n")
+	logFile.close()
+
+	os.system(cmd)
+
+	return genome_id + ".msh"
 
 #main function	
 def main():	
@@ -1687,9 +1711,11 @@ def main():
 	#	        Rename scaffolds           	 #
 	##########################################
 
-	print "Step 14/17 ---> Rename scaffold"
+	print "Step 14/17 ---> Rename scaffold and make mash sketch"
 
-	ASSEMBLY = rename_contig(scaffold, GENOME_ID,LOG_FILE)
+	ASSEMBLY = rename_contig(scaffold, GENOME_ID, LOG_FILE)
+
+	SKETCH = make_mash_sketch(ASSEMBLY, Arguments.nbThreads, GENOME_ID, Arguments.Ksize, Arguments.Ssize, LOG_FILE)
 
 
 	##########################################
@@ -1710,7 +1736,7 @@ def main():
 	sampleObjet = sample(GENOME_ID, Arguments.supplier, Arguments.projetID, REPORT_FILE, \
 		Arguments.reads1, Arguments.reads2, readsLen, FASTQC_R1, FASTQC_R2, Arguments.center, \
 		Arguments.technology, ASSEMBLY, CONTIGS, QUAST, GBK, GFF, Arguments.genus, \
-		Arguments.species, RESULT_ST, MLST_id, VCF_FILE)
+		Arguments.species, RESULT_ST, MLST_id, VCF_FILE, SKETCH)
 	sampleObjet.moveFiles(FINAL_OUTPUT_DIRECTORY)
 	sampleObjet.insertMongo(Arguments.MongoUser, Arguments.MongoPassword)
 
