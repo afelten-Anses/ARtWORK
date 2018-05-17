@@ -500,7 +500,7 @@ def Check_coverage(reads1, reads2, genus, minCov, nbThreads, maxMemory, workdir,
     logFile.write("Retrieving default reference...")
 
     #Get default reference before mapping accorded to this reference
-    reference=get_default_reference(genus,workdir,logFilepath, NASBIO1_path)
+    reference=get_default_reference(genus,workdir,logFilepath, NASBIO1_path, reads1, reads2, nbThreads)
 
     logFile.write("...ok\n")
 
@@ -664,7 +664,7 @@ def Fastqc(reads1, reads2, adaptators, outputName, nbThreads, workdir, logFilepa
 	return listResult
 
 
-def get_default_reference(genus, workdir, logFilepath, NASBIO1_path):
+def get_default_reference(genus, workdir, logFilepath, NASBIO1_path, reads1, reads2, nbThreads):
 	
 	#DO NOT generate log for this function : it will be generated in its calling function
 
@@ -695,6 +695,41 @@ def get_default_reference(genus, workdir, logFilepath, NASBIO1_path):
 		#unzip in current working directory with -d and junk paths with -j
 		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Clostridium/CP000246.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes	
 
+	elif(genus == "Bacillus"):
+		#retrieving reference filename
+		os.mkdir(workdir + "/genomes_Bacillus")
+		os.system("cp " + NASBIO1_path + "/DATA/REFERENCES/Bacillus/*zip " + workdir + "/genomes_Bacillus/.")
+		os.system("unzip \'" + workdir + "/genomes_Bacillus/*.zip\' \'*.fasta\' -d genomes_Bacillus/")
+		os.system("rm " + workdir + "/genomes_Bacillus/*_prot.fasta " + workdir + "/genomes_Bacillus/*zip")
+
+		list_FASTA = os.listdir(workdir + "/genomes_Bacillus/")
+		listdir = (" " + workdir + "/genomes_Bacillus/").join(list_FASTA)
+		
+		os.system("mash sketch -o " + workdir + "/genomes_Bacillus/references /genomes_Bacillus/" + listdir)
+		os.system("mash sketch -r -o " + workdir + "/genomes_Bacillus/reads " + reads1 + " " + reads2)
+		os.system("mash dist -p " + str(nbThreads) + " " + workdir + "/genomes_Bacillus/references.msh " + workdir + \
+		" /genomes_Bacillus/reads.msh " + " > " + workdir + "/genomes_Bacillus/mash_result.tsv")
+
+		os.system("cat " + workdir + "/genomes_Bacillus/mash_result.tsv >> " + logFilepath)
+		mash_resultFile = open(workdir + "/genomes_Bacillus/mash_result.tsv",'r')
+
+		lines = mash_resultFile.readlines()
+		mash_resultFile.close()
+		genome_ref = ""
+		minDist = 1.0
+
+		for line in lines :
+			line = line.rstrip().split('\t')
+			genome = line[0]
+			dist = float(line[2])
+			if dist < minDist :
+				minDist = dist
+				genome_ref = genome.split('/')[-1]
+
+		os.system("cp " + workdir + "/genomes_Bacillus/" + genome_ref + " " + workdir + "/reference_iVARCAll")	
+		reference_filename = genome_ref	
+		os.system("rm -r " + workdir + "/genomes_Bacillus")
+
 	else:	
 		logFile = open(logFilepath, "a")
 		logFile.write("ERROR: no reference for " + genus)
@@ -722,7 +757,7 @@ trimmomatic_path, GATK_path, picard_path):
 
     logFile = open(logFilepath, "a")
     logFile.write("Get default reference...")
-    reference = get_default_reference(genus,workdir,logFilepath, NASBIO1_path)
+    reference = get_default_reference(genus,workdir,logFilepath, NASBIO1_path, reads1, reads2, nbThreads)
     logFile.write("...ok\n")
     
 
@@ -1171,7 +1206,7 @@ def get_scaffolding_reference(genus, MLST_id,logFilepath, report):
 	return reference_fasta,fasta_ref_path,reference_gff.rstrip()
 """
 
-def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath, NASBIO1_path):
+def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath, NASBIO1_path, nbThreads):
 
 	logFile = open(logFilepath, "a")
 	logFile.write("Get scaffolding reference with Mash...")
@@ -1190,7 +1225,7 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath, NASBIO1_
 	print "mash sketch -o mash_genome_db/references mash_genome_db/" + listdir
 	os.system("mash sketch -o mash_genome_db/references mash_genome_db/" + listdir)
 
-	os.system("mash dist -p 38 mash_genome_db/references.msh " + assembly + \
+	os.system("mash dist -p " + str(nbThreads) + " mash_genome_db/references.msh " + assembly + \
 		" > mash_genome_db/mash_result.tsv")
 
 	os.system("cat mash_genome_db/mash_result.tsv >> " + logFilepath)
@@ -1447,6 +1482,7 @@ def make_mash_sketch(assembly, nbThreads, genome_id, Kmer_size, Sketch_size, log
 
 	return genome_id + ".msh"
 
+
 #main function	
 def main():	
 
@@ -1673,7 +1709,8 @@ def main():
 	print "Step 10/17 ---> Scaffolding"
 
 	#new_reference,new_reference_directory, GFFref = get_scaffolding_reference(Arguments.genus, MLST_id,LOG_FILE, REPORT_FILE)
-	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(CONTIGS, Arguments.genus, REPORT_FILE, LOG_FILE, Arguments.NASBIO1_PATH)
+	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(CONTIGS, Arguments.genus, \
+	REPORT_FILE, LOG_FILE, Arguments.NASBIO1_PATH, Arguments.nbThreads)
 	scaffold = scaffolding(CONTIGS, new_reference_directory, GENOME_ID, LOG_FILE, Arguments.maxMemory, \
 	Arguments.medusa_path , Arguments.medusa_scripts_path)
 
