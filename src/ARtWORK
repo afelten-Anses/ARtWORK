@@ -227,7 +227,7 @@ class sample(object) :
 		os.system("mv " + self.VCF + '* ' + FINAL_OUTPUT_DIRECTORY + "/.")
 		self.VCF = mongo_output + self.VCF.split("/")[-1]
 
-		os.system("mv " + self.sketch + FINAL_OUTPUT_DIRECTORY + "/.")
+		os.system("mv " + self.sketch + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
 		self.sketch = mongo_output + self.sketch.split("/")[-1]
 
 	def compressReads(self, reads):	
