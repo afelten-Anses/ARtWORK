@@ -134,8 +134,8 @@ def main():
 			" --technology " + Technology + \
 			" --supplier " + Supplier + \
 			" -trimmomatic " + Arguments.trimmomatic_path + \
-			" -medusa " + Arguments.medusa + \
-			" -medusa_scripts " + Arguments.medusa_path + \
+			" -medusa " + Arguments.medusa_path + \
+			" -medusa_scripts " + Arguments.medusa_scripts_path + \
 			" -GATK " + Arguments.GATK_path + \
 			" -picard " + Arguments.picard_path + \
 			" -s " + Species 
