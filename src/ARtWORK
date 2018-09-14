@@ -705,10 +705,10 @@ def get_default_reference(genus, workdir, logFilepath, NASBIO1_path, reads1, rea
 		list_FASTA = os.listdir(workdir + "/genomes_Bacillus/")
 		listdir = (" " + workdir + "/genomes_Bacillus/").join(list_FASTA)
 		
-		os.system("mash sketch -o " + workdir + "/genomes_Bacillus/references /genomes_Bacillus/" + listdir)
+		os.system("mash sketch -o " + workdir + "/genomes_Bacillus/references " + workdir + "/genomes_Bacillus/" + listdir)
 		os.system("mash sketch -r -o " + workdir + "/genomes_Bacillus/reads " + reads1 + " " + reads2)
 		os.system("mash dist -p " + str(nbThreads) + " " + workdir + "/genomes_Bacillus/references.msh " + workdir + \
-		" /genomes_Bacillus/reads.msh " + " > " + workdir + "/genomes_Bacillus/mash_result.tsv")
+		"/genomes_Bacillus/reads.msh " + " > " + workdir + "/genomes_Bacillus/mash_result.tsv")
 
 		os.system("cat " + workdir + "/genomes_Bacillus/mash_result.tsv >> " + logFilepath)
 		mash_resultFile = open(workdir + "/genomes_Bacillus/mash_result.tsv",'r')
