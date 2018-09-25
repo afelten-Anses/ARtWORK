@@ -116,7 +116,7 @@ def main():
 			reads1Path = PREFIX + Genus + '/' + Projet + "/data/" + ID + SUFFIX1
 			reads2Path = PREFIX + Genus + '/' + Projet + "/data/" + ID + SUFFIX2
 
-			cmd = "ARtWORK " + \
+			cmd = "ARtWORK3 " + \
 			" -Mu " + Arguments.MongoUser + \
 			" -Mp " + Arguments.MongoPassword + \
 			" -n " + Arguments.NASBIO1_PATH + \
