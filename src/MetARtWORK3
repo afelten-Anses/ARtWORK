@@ -1,0 +1,149 @@
+#!/usr/bin/python3
+# -*- coding: iso-8859-1 -*-
+import os, sys
+import argparse
+
+
+def get_parser():
+	"""
+	Parse arguments
+	@return: arguments list
+	@rtype: parser object
+	"""
+
+	parser = argparse.ArgumentParser(description='run ARtWORK for each line of a tab file')
+
+
+	parser.add_argument('-i', action="store", dest='TSV',
+						type=str, required=True, help="TSV file with 'Genus', 'Species', 'ID', 'Projet', 'Supplier', 'Center', and 'Technology' fields (REQUIRED)")
+
+	parser.add_argument('-Mu', action="store", dest='MongoUser', 
+						type=str, required=True, help='MongoDb username (REQUIRED)')
+
+	parser.add_argument('-Mp', action="store", dest='MongoPassword', 
+						type=str, required=True, help='MongoDb password (REQUIRED)')
+
+	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
+						type=str, default="~/NASBIO1", help='NASBIO1 path (default:~/NASBIO1)')
+
+	parser.add_argument('-minCov', action="store", dest='minCov',
+						type=int, default=30, help='minimum coverage required for workflow (default:30)')
+
+	parser.add_argument('-targetCov', action="store", dest='targetCov',
+						type=int, default=100, help='minimum coverage required for normalization, 0 for no normalization (default:100)')
+
+	parser.add_argument('-l', action="store", dest='minContigLen',
+						type=int, default=200, help='minimum contig length (default:200)')
+
+	parser.add_argument('-p', action="store", dest='minPhredScore',
+						type=int, default=30, help='minimum phred score (default:30)')
+
+	parser.add_argument('-T', action="store", dest='nbThreads', 
+						type=int, default=38, help='maximum number of threads to use (default:38)')
+
+	parser.add_argument('-m', action="store", dest='maxMemory', 
+						type=int, default=64000, help='max memory to use in Mb (default:64000)')
+
+	parser.add_argument('-trimmomatic', action="store", dest='trimmomatic_path', 
+						type=str, default='/opt/Trimmomatic/0.33/trimmomatic-0.33.jar', help='Trimmomatic jar path \
+						(default:/opt/Trimmomatic/0.33/trimmomatic-0.33.jar)')	
+
+	parser.add_argument('-medusa', action="store", dest='medusa_path', 
+						type=str, default='/opt/medusa/1.0/medusa.jar', help='medusa jar path \
+						(default:/opt/medusa/1.0/medusa.jar)')		
+
+	parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', 
+						type=str, default='/opt/medusa/1.0/medusa_scripts/', help='medusa scripts path \
+						(default:/opt/medusa/1.0/medusa_scripts/)')		
+
+	parser.add_argument('-GATK', action="store", dest='GATK_path', 
+						type=str, default='/opt/GATK/3.7.0/GenomeAnalysisTK.jar', help='GATK jar path \
+						(default:/opt/GATK/3.7.0/GenomeAnalysisTK.jar)')	
+
+	parser.add_argument('-picard', action="store", dest='picard_path', 
+						type=str, default='/opt/picard-tools/1.133/picard.jar', help='picard-tools jar path \
+						(default:/opt/picard-tools/1.133/picard.jar)')	
+
+	return parser
+
+
+
+#main function	
+def main():	
+
+	# Get arguments 
+	parser=get_parser()
+	
+	# Print parser.help if no arguments
+	if len(sys.argv)==1:
+		parser.print_help()
+		sys.exit(1)
+	
+	Arguments=parser.parse_args()	
+
+	if Arguments.NASBIO1_PATH[-1] == '/' :
+		Arguments.NASBIO1_PATH = Arguments.NASBIO1_PATH[0:-1]
+
+	PREFIX = Arguments.NASBIO1_PATH + "/PROJETS/"
+	SUFFIX1 = "_R1.fastq.gz"
+	SUFFIX2 = "_R2.fastq.gz"
+
+	tabFile = open(Arguments.TSV, "r")
+	tabLines = tabFile.readlines()
+	tabFile.close()
+
+	flag = True
+
+	for line in tabLines :
+
+		if flag :
+			flag = False
+			pass 
+
+		else :	
+
+			line = line.rstrip()
+			line = line.split("\t")
+
+			Genus = line[0].replace(' ','')
+			Species = line[1].replace(' ','')
+			ID = line[2].replace(' ','')
+			Projet = line[3].replace(' ','')
+			Supplier = line[4]
+			Center = line[5]
+			Technology = line[6]
+
+			reads1Path = PREFIX + Genus + '/' + Projet + "/data/" + ID + SUFFIX1
+			reads2Path = PREFIX + Genus + '/' + Projet + "/data/" + ID + SUFFIX2
+
+			cmd = "ARtWORK " + \
+			" -Mu " + Arguments.MongoUser + \
+			" -Mp " + Arguments.MongoPassword + \
+			" -n " + Arguments.NASBIO1_PATH + \
+			" -1 " + reads1Path + \
+			" -2 " + reads2Path + \
+			" -g " + Genus + \
+			" -T " + str(Arguments.nbThreads) + \
+			" -m " + str(Arguments.maxMemory) + \
+			" -minCov " + str(Arguments.minCov) + \
+			" -targetCov " + str(Arguments.targetCov) + \
+			" -l " + str(Arguments.minContigLen) + \
+			" -p " + str(Arguments.minPhredScore) + \
+			" --project " + Projet + \
+			" --center " + Center + \
+			" --technology " + Technology + \
+			" --supplier " + Supplier + \
+			" -trimmomatic " + Arguments.trimmomatic_path + \
+			" -medusa " + Arguments.medusa_path + \
+			" -medusa_scripts " + Arguments.medusa_scripts_path + \
+			" -GATK " + Arguments.GATK_path + \
+			" -picard " + Arguments.picard_path + \
+			" -s " + Species 
+
+			print(cmd) 
+
+			os.system(cmd)
+
+
+if __name__ == "__main__":
+	main()		
