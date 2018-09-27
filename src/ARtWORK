@@ -15,6 +15,7 @@ from shutil import copyfile
 import smtplib
 from Bio import SeqIO
 import patoolib
+import re
 
 
 __doc__="""
@@ -1025,6 +1026,7 @@ def get_serovar_from_ST_Salmonella(contigs,logFilepath, report, cwd):
 	SeqSero_file = open(output + "/Seqsero_result.txt", 'r')
 	lines = SeqSero_file.readlines()
 	predictedSerovar = lines[5].rstrip().split('\t')[1]
+	predictedSerovar = re.sub('\(.*','',predictedSerovar)
 
 	if "N/A" in predictedSerovar:
 		predictedSerovar = "N/A"
