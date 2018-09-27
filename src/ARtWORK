@@ -1025,9 +1025,12 @@ def get_serovar_from_ST_Salmonella(contigs,logFilepath, report, cwd):
 	#Parse SeqSero output
 	SeqSero_file = open(output + "/Seqsero_result.txt", 'r')
 	lines = SeqSero_file.readlines()
-	predictedSerovar = lines[5].rstrip().split('\t')[1]
-	predictedSerovar = re.sub('\(.*','',predictedSerovar)
-
+	try:
+		predictedSerovar = lines[5].rstrip().split('\t')[1]
+		predictedSerovar = re.sub('\(.*','',predictedSerovar)
+	except:
+		predictedSerovar = "N/A"
+		
 	if "N/A" in predictedSerovar:
 		predictedSerovar = "N/A"
 		predictedAntigenicProfile = "N/A"
