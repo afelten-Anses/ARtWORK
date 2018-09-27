@@ -1031,7 +1031,7 @@ def get_serovar_from_ST_Salmonella(contigs,logFilepath, report, cwd):
 		predictedSerovar = predictedSerovar.replace('*','')
 		if predictedSerovar == "potential monophasic variant of Typhimurium":
 			predictedSerovar = "Typhimurium monophasic variant"
-		elif ' or ' in predictedSerovar or 'potential ' n predictedSerovar :
+		elif ' or ' in predictedSerovar or 'potential ' in predictedSerovar :
 			predictedSerovar = "N/A"
 	except:
 		predictedSerovar = "N/A"
