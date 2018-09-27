@@ -1028,6 +1028,9 @@ def get_serovar_from_ST_Salmonella(contigs,logFilepath, report, cwd):
 	try:
 		predictedSerovar = lines[5].rstrip().split('\t')[1]
 		predictedSerovar = re.sub('\(.*','',predictedSerovar)
+		predictedSerovar = predictedSerovar.replace('*','')
+		if ' or ' in predictedSerovar or 'potential ' n predictedSerovar :
+			predictedSerovar = "N/A"
 	except:
 		predictedSerovar = "N/A"
 		
