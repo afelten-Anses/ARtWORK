@@ -927,13 +927,14 @@ def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus, NASBIO1_path, 
 	logFile = open(logFilepath,"a")
 
 	if(genus == "Salmonella"):
-		logFile.write("get serovar from ST Salmonella...")
-		RESULT_SEROVAR, RESULT_AntigenicProfile = get_serovar_from_ST_Salmonella(contigs, logFilepath, report, cwd)
-		logFile.write("...ok")
-		report_file.write("\nPREDICTED SEROVAR : " + RESULT_SEROVAR + "\n")
-		report_file.write("\nPREDICTED ANTIGENIC PROFILE : " + RESULT_AntigenicProfile + "\n")
-		RESULT_MLST.append(RESULT_SEROVAR)
-		RESULT_MLST.append(RESULT_AntigenicProfile)
+		print("get serovar from ST Salmonella after scafolding step")
+		#logFile.write("get serovar from ST Salmonella...")
+		#RESULT_SEROVAR, RESULT_AntigenicProfile = get_serovar_from_ST_Salmonella(contigs, logFilepath, report, cwd)
+		#logFile.write("...ok")
+		#report_file.write("\nPREDICTED SEROVAR : " + RESULT_SEROVAR + "\n")
+		#report_file.write("\nPREDICTED ANTIGENIC PROFILE : " + RESULT_AntigenicProfile + "\n")
+		#RESULT_MLST.append(RESULT_SEROVAR)
+		#RESULT_MLST.append(RESULT_AntigenicProfile)
 
 
 	elif(genus == "Listeria"):
@@ -1044,6 +1045,12 @@ def get_serovar_from_ST_Salmonella(contigs,logFilepath, report, cwd):
 		predictedAntigenicProfile = lines[4].rstrip().split('\t')[1]	
 				
 	shutil.rmtree(output)
+
+	report_file = open(report, 'a')
+	report_file.write("\nPREDICTED SEROVAR : " + predictedSerovar + "\n")
+	report_file.write("\nPREDICTED ANTIGENIC PROFILE : " + predictedAntigenicProfile + "\n")
+	report_file.close()	
+	
 	return predictedSerovar, predictedAntigenicProfile
 
 
@@ -1724,9 +1731,10 @@ def main():
 		RESULT_ST = MLST_result[0]
 
 		if(Arguments.genus == "Salmonella"):
-			RESULT_SEROVAR = MLST_result[1]
-			RESULT_ANTIGENIC_PROFILE = MLST_result[2]
-			MLST_id = [RESULT_SEROVAR, RESULT_ANTIGENIC_PROFILE]
+			#RESULT_SEROVAR = MLST_result[1]
+			#RESULT_ANTIGENIC_PROFILE = MLST_result[2]
+			#MLST_id = [RESULT_SEROVAR, RESULT_ANTIGENIC_PROFILE]
+			pass
 
 		elif(Arguments.genus == "Listeria"):
 			RESULT_CC = MLST_result[1]	
@@ -1807,6 +1815,10 @@ def main():
 	##########################################
 
 	print("Step 16/17 ---> Moving files and add to mongoDB")
+	
+	if Arguments.genus == "Salmonella" :
+		RESULT_SEROVAR,RESULT_ANTIGENIC_PROFILE = get_serovar_from_ST_Salmonella(ASSEMBLY,LOG_FILE, REPORT_FILE, cwd)
+		MLST_id = [RESULT_SEROVAR, RESULT_ANTIGENIC_PROFILE]
 
 	sampleObjet = sample(GENOME_ID, Arguments.supplier, Arguments.projetID, REPORT_FILE, \
 		Arguments.reads1, Arguments.reads2, readsLen, FASTQC_R1, FASTQC_R2, Arguments.center, \
