@@ -61,7 +61,7 @@ def get_parser():
 						type=str, required=True, help='Fastq file pair 2 with \'_R2\' (REQUIRED)')
 
 	parser.add_argument('-g', action="store", dest='genus',
-						type=str, required=True, help='genus Salmonella/Listeria/Staphylococcus/Clostridium (REQUIRED)')
+						type=str, required=True, help='genus Salmonella/Listeria/Staphylococcus/Clostridium/Bacillus (REQUIRED)')
 
 	parser.add_argument('-s', action="store", dest='species',
 						type=str, required=True, help='species (REQUIRED)')
@@ -153,7 +153,8 @@ class sample(object) :
 	def __init__(self, SampleID, supplier, projetID, report, \
 		reads1Path, reads2Path, readsLen, reads1QC, reads2QC, center, technology, \
 		assembly, contigs, QUAST, GBK, GFF, \
-		genus, species, ST, MLST_id, VCF, sketch):
+		genus, species, ST, MLST_id, VCF, sketch, nbContigs, totalLength, \
+		largestContig, n50, genomeFraction, refScafold, refSNP, breadthCoverage):
 		"""
 		Initialize the sample class
 		"""
@@ -172,6 +173,8 @@ class sample(object) :
 		self.center = center
 		self.technology = technology
 		self.VCF = VCF
+		self.RefSNP = refSNP
+		self.BreadthCoverage = breadthCoverage
 
 		self.assembly = assembly
 		self.contigs = contigs
@@ -179,7 +182,13 @@ class sample(object) :
 		self.GBK = GBK
 		self.GFF = GFF
 		self.sketch = sketch
-
+		self.NbContigs = nbContigs
+		self.TotalLength = totalLength
+		self.LargestContig = largestContig
+		self.N50 = n50
+		self.GenomeFraction = genomeFraction
+		self.RefScafold = refScafold
+		
 		self.genus = genus
 		self.species = species
 		self.ST = ST
@@ -189,7 +198,7 @@ class sample(object) :
 			self.antigenic_profile = MLST_id[1]
 
 		elif self.genus == "Listeria" :
-			self.CC = MLST_id 	
+			self.CC = MLST_id[0] 	
 
 
 	def moveFiles(self, FINAL_OUTPUT_DIRECTORY):
@@ -233,6 +242,7 @@ class sample(object) :
 		os.system("mv " + self.sketch + ' ' + FINAL_OUTPUT_DIRECTORY + "/.")
 		self.sketch = mongo_output + self.sketch.split("/")[-1]
 
+
 	def compressReads(self, reads):	
 
 		if reads.split('.')[-1] != "gz" :
@@ -265,7 +275,9 @@ class sample(object) :
 				"FASTQC_pair2":self.reads2QC+"/fastqc_report.html",
 				"Center":self.center,
 				"Technology":self.technology,
-				"VCF":self.VCF
+				"VCF":self.VCF,
+				"RefSNP":self.RefSNP,
+				"BreadthCoverage":self.BreadthCoverage
 			},
 			"Genome":{
 				"Assembly":self.assembly,
@@ -273,7 +285,13 @@ class sample(object) :
 				"QUAST":self.QUAST+"/report.html",
 				"GBK":self.GBK,
 				"GFF":self.GFF,
-				"Sketch":self.sketch
+				"Sketch":self.sketch,
+				"NbContigs":self.NbContigs,
+				"TotalLength":self.TotalLength,
+				"LargestContig":self.LargestContig,
+				"N50":self.N50,
+				"GenomeFraction":self.GenomeFraction,
+				"RefScafold":self.RefScafold
 			},
 			"Phylogeny":{
 				"Genus":self.genus,
@@ -1527,6 +1545,65 @@ def make_mash_sketch(assembly, nbThreads, genome_id, Kmer_size, Sketch_size, log
 	return genome_id + ".msh"
 
 
+def parse_reports(SampleID, cwd):
+
+	artwork_report =  cwd + SampleID + "_report.txt"
+	quast_report = cwd + "/QUAST/report.tsv"
+
+	Dico_infos = {}
+
+	#Parse ARTwort report
+	artwork_file = open (artwork_report, 'r')
+	artwork_content = artwork_file.readlines()
+	artwork_file.close()
+
+	for line in artwork_content :
+		line = line.rstrip()
+		line = line.split(' : ')
+		# get ref_SNP
+		if line[0] == 'REFERENCE GENOME' :
+			Dico_infos["RefSNP"] = line[1]
+
+    	# get breadth_cov
+		elif line[0] == 'BREADTH COVERAGE' :
+			Dico_infos["BreadthCoverage"] = line[1].split('%')[0]
+
+    	# get ref_scafold
+		elif line[0] == 'Reference used for scaffolding' :
+			Dico_infos["RefScafold"] = line[1].split('.')[0]
+
+	#Parse QUAST report
+	quast_file = open (quast_report, 'r')
+	quast_content = quast_file.readlines()
+	quast_file.close()
+
+	for line in quast_content :
+		line = line.rstrip()
+		line = line.split('\t')
+
+	    # get nb contigs
+		if line[0] == '# contigs (>= 0 bp)' :
+			Dico_infos["NbContigs"] = line[1]
+
+	    # get total_length
+		elif line[0] == 'Total length (>= 0 bp)' :
+			Dico_infos["TotalLength"] = line[1]
+
+		# get largest_contig
+		elif line[0] == 'Largest contig' :
+			Dico_infos["LargestContig"] = line[1]
+
+	    # get N50
+		elif line[0] == 'N50' :
+			Dico_infos["N50"] = line[1]
+
+    	# genome_fraction
+		elif line[0] == 'Genome fraction (%)' :
+			Dico_infos["GenomeFraction"] = line[1]
+
+	return Dico_infos
+
+
 #main function	
 def main():	
 
@@ -1815,6 +1892,8 @@ def main():
 	##########################################
 
 	print("Step 16/17 ---> Moving files and add to mongoDB")
+
+	dico_Suplinfos = parse_reports(GENOME_ID, cwd)
 	
 	if Arguments.genus == "Salmonella" :
 		RESULT_SEROVAR,RESULT_ANTIGENIC_PROFILE = get_serovar_from_ST_Salmonella(ASSEMBLY,LOG_FILE, REPORT_FILE, cwd)
@@ -1823,7 +1902,11 @@ def main():
 	sampleObjet = sample(GENOME_ID, Arguments.supplier, Arguments.projetID, REPORT_FILE, \
 		Arguments.reads1, Arguments.reads2, readsLen, FASTQC_R1, FASTQC_R2, Arguments.center, \
 		Arguments.technology, ASSEMBLY, CONTIGS, QUAST, GBK, GFF, Arguments.genus, \
-		Arguments.species, RESULT_ST, MLST_id, VCF_FILE, SKETCH)
+		Arguments.species, RESULT_ST, MLST_id, VCF_FILE, SKETCH, dico_Suplinfos['NbContigs'], \
+		dico_Suplinfos['TotalLength'], dico_Suplinfos['LargestContig'], dico_Suplinfos['N50'],\ 
+		dico_Suplinfos['GenomeFraction'], dico_Suplinfos['RefScafold'], dico_Suplinfos['RefSNP'], \
+		dico_Suplinfos['BreadthCoverage'])
+
 	sampleObjet.moveFiles(FINAL_OUTPUT_DIRECTORY)
 	sampleObjet.insertMongo(Arguments.MongoUser, Arguments.MongoPassword)
 
