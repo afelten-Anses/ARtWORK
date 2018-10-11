@@ -1547,7 +1547,7 @@ def make_mash_sketch(assembly, nbThreads, genome_id, Kmer_size, Sketch_size, log
 
 def parse_reports(SampleID, cwd):
 
-	artwork_report =  cwd + SampleID + "_report.txt"
+	artwork_report =  cwd + '/' + SampleID + "_report.txt"
 	quast_report = cwd + "/QUAST/report.tsv"
 
 	Dico_infos = {}
@@ -1903,8 +1903,8 @@ def main():
 		Arguments.reads1, Arguments.reads2, readsLen, FASTQC_R1, FASTQC_R2, Arguments.center, \
 		Arguments.technology, ASSEMBLY, CONTIGS, QUAST, GBK, GFF, Arguments.genus, \
 		Arguments.species, RESULT_ST, MLST_id, VCF_FILE, SKETCH, dico_Suplinfos['NbContigs'], \
-		dico_Suplinfos['TotalLength'], dico_Suplinfos['LargestContig'], dico_Suplinfos['N50'],\ 
-		dico_Suplinfos['GenomeFraction'], dico_Suplinfos['RefScafold'], dico_Suplinfos['RefSNP'], \
+		dico_Suplinfos['TotalLength'], dico_Suplinfos['LargestContig'], \
+		dico_Suplinfos['N50'], dico_Suplinfos['GenomeFraction'], dico_Suplinfos['RefScafold'], dico_Suplinfos['RefSNP'], \
 		dico_Suplinfos['BreadthCoverage'])
 
 	sampleObjet.moveFiles(FINAL_OUTPUT_DIRECTORY)
