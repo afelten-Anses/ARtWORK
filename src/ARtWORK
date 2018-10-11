@@ -291,7 +291,7 @@ class sample(object) :
 				"LargestContig":self.LargestContig,
 				"N50":self.N50,
 				"GenomeFraction":self.GenomeFraction,
-				"RefScafold":self.RefScafold
+				"RefScaffold":self.RefScafold
 			},
 			"Phylogeny":{
 				"Genus":self.genus,
