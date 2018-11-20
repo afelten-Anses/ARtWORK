@@ -140,7 +140,7 @@ def main():
 			" -picard " + Arguments.picard_path + \
 			" -s " + Species 
 
-			print cmd 
+			print(cmd) 
 
 			os.system(cmd)
 
