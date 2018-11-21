@@ -879,8 +879,8 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 
 	os.remove(tmp_sam_file)
 	os.remove(tmp_sam_file2)
-	print sum_mapped_scaffold
-	print sum_scaffold_len
+	print(sum_mapped_scaffold)
+	print(sum_scaffold_len)
 	mapped_percent = float(sum_mapped_scaffold) / float(sum_scaffold_len) * 100.0
 
 	if mapped_percent >= min_percent :
@@ -890,7 +890,7 @@ def check_scaffold_coverage(scaffold, reference, min_percent, nbThreads, report,
 		logFile = open(log, 'a')
 		reportFile = open(report, 'a')
 		error = "ERROR : only " + str(mapped_percent) + " percent map on " + reference + " !!!"
-		print error
+		print(error)
 		logFile.write(error)
 		reportFile.write(error)
 		logFile.close()
@@ -924,7 +924,7 @@ def main():
 	
 	Arguments=parser.parse_args()	
 
-	print "Step 1/16 ---> Initialisation"
+	print("Step 1/16 ---> Initialisation")
 
 	# Go to working directory gived by Arguments.workdir
 
@@ -979,7 +979,7 @@ def main():
 	#				Check reads				 #
 	##########################################
 	
-	print "Step 2/16 ---> Check reads format"
+	print("Step 2/16 ---> Check reads format")
 
 	### READ 1 ###
 
@@ -1021,7 +1021,7 @@ def main():
 	#		    Coverage checking			 #
 	##########################################
 	
-	print "Step 3/16 ---> quality control"
+	print("Step 3/16 ---> quality control")
 	coverage = Check_coverage(Arguments.reads1,Arguments.reads2,Arguments.minCov,Arguments.nbThreads,Arguments.maxMemory,cwd,LOG_FILE,REPORT_FILE,Arguments.RefScaffold)
 
 
@@ -1029,7 +1029,7 @@ def main():
 	#		      Normalization 			 #
 	##########################################
 	
-	print "Step 4/16 ---> normalization"
+	print("Step 4/16 ---> normalization")
 	if(coverage > Arguments.targetCov):
 		reads1, reads2 = normalization(Arguments.reads1, Arguments.reads2, Arguments.targetCov, Arguments.nbThreads, GENOME_ID, LOG_FILE, REPORT_FILE)
 		os.system("mv " + reads1 + " " + Arguments.reads1)
@@ -1039,7 +1039,7 @@ def main():
 	#		    	  FASTQC		    	 #
 	##########################################
 
-	print "Step 5/16 ---> FASTQC"
+	print("Step 5/16 ---> FASTQC")
 
 	fastqcResult = Fastqc(Arguments.reads1, Arguments.reads2, ADAPTATERS_FILE, "fastqc", Arguments.nbThreads, cwd, LOG_FILE, REPORT_FILE)
 
@@ -1052,7 +1052,7 @@ def main():
 	#		    	iVARCall		    	 #
 	##########################################
 
-	print "Step 6/16 ---> iVARCall"
+	print("Step 6/16 ---> iVARCall")
 
 	VCF_FILE = commande_iVARCAll(Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
 		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.RefVariant)
@@ -1062,7 +1062,7 @@ def main():
 	#		    Trimming reads		    	 #
 	##########################################
 
-	print "Step 7/16 ---> Trimming"
+	print("Step 7/16 ---> Trimming")
 	reads_trim =  soft_trimming(Arguments.reads1, Arguments.reads2, ADAPTATERS_FILE, Arguments.nbThreads, Arguments.maxMemory, Arguments.minPhredScore, GENOME_ID, cwd, REPORT_FILE, LOG_FILE)
 	
 	reads1_trim = reads_trim[0]
@@ -1073,7 +1073,7 @@ def main():
 	#	        De novo assembly        	 #
 	##########################################	
 
-	print "Step 8/16 ---> De novo assembly"
+	print("Step 8/16 ---> De novo assembly")
 
 	CONTIGS = Assembly(reads1_trim,reads2_trim,cwd,LOG_FILE,Arguments.nbThreads)
 
@@ -1082,7 +1082,7 @@ def main():
 	#	           Scaffolding   	         #
 	##########################################
 
-	print "Step 9/16 ---> Scaffolding"
+	print("Step 9/16 ---> Scaffolding")
 
 	os.system("mkdir RefScaffold")
 	os.system("cp " + Arguments.RefScaffold + " RefScaffold/.")
@@ -1093,7 +1093,7 @@ def main():
 	#	          Gap Closing	             #
 	##########################################	
 
-	print "Step 10/16 ---> Gap closing"
+	print("Step 10/16 ---> Gap closing")
 
 	readsLen = get_len(str(fastqc_txtreport))
 	scaffold = CloseGaps(scaffold, CONTIGS, reads1_trim, reads2_trim, Arguments.nbThreads, GENOME_ID, readsLen, LOG_FILE, REPORT_FILE)
@@ -1102,7 +1102,7 @@ def main():
 	#	         Contig filtration     	 	 #
 	##########################################
 
-	print "Step 11/16 ---> Contig filtration"
+	print("Step 11/16 ---> Contig filtration")
 
 	scaffold = TrimContigsByLen(scaffold, Arguments.minContigLen, LOG_FILE)
 
@@ -1111,7 +1111,7 @@ def main():
 	#	      QUAST quality control     	 #
 	##########################################
 
-	print "Step 12/16 ---> Assembly control"
+	print("Step 12/16 ---> Assembly control")
 
 	check_scaffold_coverage(scaffold, Arguments.RefScaffold, Arguments.min_mapped_scaffold_percent, Arguments.nbThreads, REPORT_FILE, LOG_FILE, Arguments.max_len_diff)
 	QUAST = Assembly_control(scaffold, Arguments.RefScaffold, Arguments.minContigLen, cwd, LOG_FILE, Arguments.nbThreads)
@@ -1121,7 +1121,7 @@ def main():
 	#	        Rename scaffolds           	 #
 	##########################################
 
-	print "Step 13/16 ---> Rename scaffold"
+	print("Step 13/16 ---> Rename scaffold")
 
 	ASSEMBLY = rename_contig(scaffold, GENOME_ID,LOG_FILE)
 
@@ -1130,7 +1130,7 @@ def main():
 	#	        	Annotation            	 #
 	##########################################
 
-	print "Step 14/16 ---> Genome annotation"
+	print("Step 14/16 ---> Genome annotation")
 
 	GBK, GFF = annotation(ASSEMBLY, GENOME_ID, Arguments.nbThreads, LOG_FILE)
 
@@ -1139,7 +1139,7 @@ def main():
 	#	          Save results          	 #
 	##########################################
 
-	print "Step 15/16 ---> Moving files"
+	print("Step 15/16 ---> Moving files")
 
 	sampleObjet = sample(GENOME_ID, REPORT_FILE, \
 		Arguments.reads1, Arguments.reads2, readsLen, FASTQC_R1, FASTQC_R2, \
@@ -1152,7 +1152,7 @@ def main():
 	#	        Remove tmp files	       	 #
 	##########################################
 
-	print "Step 16/16 ---> Cleaning temporary files"
+	print("Step 16/16 ---> Cleaning temporary files")
 
 	# Last write in log file : date and time elapsed
 	t1 = time.time() - t0
