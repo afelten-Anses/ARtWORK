@@ -304,7 +304,7 @@ class sample(object) :
 
 		if self.genus == "Salmonella" :
 			document["Phylogeny"]["Serovar"] = self.serovar
-			document["Phylogeny"]["Serovar"] = self.antigenic_profile
+			document["Phylogeny"]["Antigenic_profile"] = self.antigenic_profile
 
 		elif self.genus == "Listeria" :	
 			document["Phylogeny"]["ClonalComplex"] = self.CC	
