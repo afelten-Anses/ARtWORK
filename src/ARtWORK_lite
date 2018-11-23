@@ -65,6 +65,14 @@ def get_parser():
 						type=int, default=80, help='minimum percent of total scaffold length \
 						mapped on reference, used to detect contaminants (default:80)')
 
+        parser.add_argument('-medusa', action="store", dest='medusa_path',
+                                                type=str, default="$CONDA_PREFIX/bin/medusa.jar", help='medusa jar path \
+                                                (default:$CONDA_PREFIX/bin/medusa.jar)')           
+
+        parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path',
+                                                type=str, default="$CONDA_PREFIX/bin/medusa_scripts/", help='medusa scripts path \
+                                                (default:$CONDA_PREFIX/bin/medusa_scripts/)')      
+
 	parser.add_argument('-d', action="store", dest='max_len_diff', 
 						type=int, default=30, help='maximum percent of length difference \
 						between assembly and reference (default:20)')
@@ -363,7 +371,7 @@ def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, 
 
 	os.system('echo "Trimmomatic started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
-	command = "java -jar " + str(Maxmemoryg) + " /opt/Trimmomatic/0.33/trimmomatic-0.33.jar PE -threads " + \
+	command = "trimmomatic " + str(Maxmemoryg) + " PE -threads " + \
 	str(nbThreads) + " -phred33 " + reads1 + " " + reads2 + " " + forward_paired + " " + \
 	forward_unpaired + " " + reverse_paired + " " + reverse_unpaired + \
 	" ILLUMINACLIP:" + adaptaters + ":2:" + str(phredscore) + ":15 " + \
@@ -678,7 +686,7 @@ def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory):
 	
 	os.system('echo "Scaffolding started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath )
 
-	cmd = "java " + Maxmemoryg + " -jar /opt/medusa/1.0/medusa.jar -d -w2 -scriptPath /opt/medusa/1.0/medusa_scripts/ " + \
+	cmd = "java " + Maxmemoryg + " -jar "+medusa_path+" -d -w2 -scriptPath  "$CONDA_PREFIX/bin/medusa_scripts/"" + \
 		" -i " + contigs_file + " -o " + scaffold_file + " -f " + referencepath + " >> " + logFilepath + " 2>&1"
 
 	logFile = open(logFilepath, "a")
