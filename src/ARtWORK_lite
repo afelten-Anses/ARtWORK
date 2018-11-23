@@ -66,13 +66,13 @@ def get_parser():
 						mapped on reference, used to detect contaminants (default:80)')
 
         parser.add_argument('-medusa', action="store", dest='medusa_path',
-                                                type=str, default="$CONDA_PREFIX/bin/medusa.jar", help='medusa jar path \
+                                                type=str, help='medusa jar path \
                                                 (default:$CONDA_PREFIX/bin/medusa.jar)')           
-
+#$CONDA_PREFIX/bin/medusa.jar
         parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path',
-                                                type=str, default="$CONDA_PREFIX/bin/medusa_scripts/", help='medusa scripts path \
+                                                type=str, help='medusa scripts path \
                                                 (default:$CONDA_PREFIX/bin/medusa_scripts/)')      
-
+#default="$CONDA_PREFIX/bin/medusa_scripts/"
 	parser.add_argument('-d', action="store", dest='max_len_diff', 
 						type=int, default=30, help='maximum percent of length difference \
 						between assembly and reference (default:20)')
@@ -677,7 +677,7 @@ def TrimContigsByLen(fasta_file, min_length,logFilepath): #In order to do not ke
     return fasta_file + "_trimmed.fasta"
 
 
-def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory):
+def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory,medusa_path,medusa_scripts_path):
 
 	os.system('echo "\n************************** SCAFFOLDING WORKFLOW : START **************************\n" >> '+ logFilepath)
 
@@ -686,7 +686,7 @@ def scaffolding(contigs_file, referencepath, Gid, logFilepath ,maxMemory):
 	
 	os.system('echo "Scaffolding started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath )
 
-	cmd = "java " + Maxmemoryg + " -jar "+medusa_path+" -d -w2 -scriptPath  "$CONDA_PREFIX/bin/medusa_scripts/"" + \
+	cmd = "java " + Maxmemoryg + " -jar "+medusa_path+" -d -w2 -scriptPath  "+medusa_scripts_path + \
 		" -i " + contigs_file + " -o " + scaffold_file + " -f " + referencepath + " >> " + logFilepath + " 2>&1"
 
 	logFile = open(logFilepath, "a")
@@ -931,6 +931,14 @@ def main():
 		sys.exit(1)
 	
 	Arguments=parser.parse_args()	
+	
+
+	#itsmeludo 23/12/2018
+	if Arguments.medusa_path =="":
+		medusa_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","medusa.jar")
+	if Arguments.medusa_scripts_path =="":
+		medusa_scripts_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","medusa.jar")
+	###fin modif
 
 	print("Step 1/16 ---> Initialisation")
 
@@ -1094,7 +1102,7 @@ def main():
 
 	os.system("mkdir RefScaffold")
 	os.system("cp " + Arguments.RefScaffold + " RefScaffold/.")
-	scaffold = scaffolding(CONTIGS, "RefScaffold", GENOME_ID, LOG_FILE, Arguments.maxMemory)
+	scaffold = scaffolding(CONTIGS, "RefScaffold", GENOME_ID, LOG_FILE, Arguments.maxMemory,medusa_path,medusa_scripts_path)
 
 
 	##########################################

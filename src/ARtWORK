@@ -114,13 +114,15 @@ def get_parser():
 #						type=str, default='/opt/Trimmomatic/0.33/trimmomatic-0.33.jar', help='Trimmomatic jar path \
 #						(default:/opt/Trimmomatic/0.33/trimmomatic-0.33.jar)')	
 
-	parser.add_argument('-medusa', action="store", dest='medusa_path', 
-						type=str, default="$CONDA_PREFIX/bin/medusa.jar", help='medusa jar path \
-						(default:$CONDA_PREFIX/bin/medusa.jar)')		
+ parser.add_argument('-medusa', action="store", dest='medusa_path',
+                                                type=str, help='medusa jar path \
+                                                (default:$CONDA_PREFIX/bin/medusa.jar)')
+#$CONDA_PREFIX/bin/medusa.jar
+        parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path',
+                                                type=str, help='medusa scripts path \
+                                                (default:$CONDA_PREFIX/bin/medusa_scripts/)')
+#default="$CONDA_PREFIX/bin/medusa_scripts/"
 
-	parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', 
-						type=str, default="$CONDA_PREFIX/bin/medusa_scripts/", help='medusa scripts path \
-						(default:$CONDA_PREFIX/bin/medusa_scripts/)')		
 
 #	parser.add_argument('-GATK', action="store", dest='GATK_path', 
 #						type=str, default='/opt/GATK/3.7.0/GenomeAnalysisTK.jar', help='GATK jar path \
@@ -1835,7 +1837,7 @@ def main():
 	new_reference,new_reference_directory, GFFref = find_scaffoldingRef_with_Mash(CONTIGS, Arguments.genus, \
 	REPORT_FILE, LOG_FILE, Arguments.NASBIO1_PATH, Arguments.nbThreads)
 	scaffold = scaffolding(CONTIGS, new_reference_directory, GENOME_ID, LOG_FILE, Arguments.maxMemory, \
-	Arguments.medusa_path , Arguments.medusa_scripts_path)
+	medusa_path , medusa_scripts_path)
 
 
 	##########################################
