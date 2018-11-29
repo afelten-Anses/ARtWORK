@@ -43,14 +43,14 @@ def get_parser():
 
 	parser.add_argument('-m', action="store", dest='maxMemory', 
 						type=int, default=64000, help='max memory to use in Mb (default:64000)')
+	
+	parser.add_argument('-medusa', action="store", dest='medusa_path',type=str, help='medusa jar path ')
+	
+	parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', type=str, help='medusa scripts path')
+	
+	parser.add_argument('-GATK', action="store", dest='GATK_path',type=str, default='GenomeAnalysisTK.jar', help='GATK jar path')
 
-        parser.add_argument('-medusa', action="store", dest='medusa_path',
-                                                type=str, default="$CONDA_PREFIX/bin/medusa.jar", help='medusa jar path \
-                                                (default:$CONDA_PREFIX/bin/medusa.jar)')              
 
-        parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path',
-                                                type=str, default="$CONDA_PREFIX/bin/medusa_scripts/", help='medusa scripts path \
-                                                (default:$CONDA_PREFIX/bin/medusa_scripts/)')         
 #	parser.add_argument('-trimmomatic', action="store", dest='trimmomatic_path', 
 #						type=str, default='/opt/Trimmomatic/0.33/trimmomatic-0.33.jar', help='Trimmomatic jar path \
 #						(default:/opt/Trimmomatic/0.33/trimmomatic-0.33.jar)')	

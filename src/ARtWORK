@@ -110,27 +110,11 @@ def get_parser():
 						type=int, default=30, help='maximum percent of length difference \
 						between assembly and reference (default:20)')
 
-#	parser.add_argument('-trimmomatic', action="store", dest='trimmomatic_path', 
-#						type=str, default='/opt/Trimmomatic/0.33/trimmomatic-0.33.jar', help='Trimmomatic jar path \
-#						(default:/opt/Trimmomatic/0.33/trimmomatic-0.33.jar)')	
+	parser.add_argument('-medusa', action="store", dest='medusa_path', type=str, help='medusa jar path ')
+        
+	parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', type=str, help='medusa scripts path')
 
- parser.add_argument('-medusa', action="store", dest='medusa_path',
-                                                type=str, help='medusa jar path \
-                                                (default:$CONDA_PREFIX/bin/medusa.jar)')
-#$CONDA_PREFIX/bin/medusa.jar
-        parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path',
-                                                type=str, help='medusa scripts path \
-                                                (default:$CONDA_PREFIX/bin/medusa_scripts/)')
-#default="$CONDA_PREFIX/bin/medusa_scripts/"
-
-
-#	parser.add_argument('-GATK', action="store", dest='GATK_path', 
-#						type=str, default='/opt/GATK/3.7.0/GenomeAnalysisTK.jar', help='GATK jar path \
-#						(default:/opt/GATK/3.7.0/GenomeAnalysisTK.jar)')	
-
-#	parser.add_argument('-picard', action="store", dest='picard_path', 
-#						type=str, default='/opt/picard-tools/1.133/picard.jar', help='picard-tools jar path \
-#						(default:/opt/picard-tools/1.133/picard.jar)')																						
+	parser.add_argument('-GATK', action="store", dest='GATK_path',type=str, help='GATK jar path')
 
 	parser.add_argument('--supplier', action="store", dest='supplier', 
 						type=str, default='Anses', help='Supplier (default:Anses)')
@@ -587,7 +571,7 @@ def Check_coverage(reads1, reads2, genus, minCov, nbThreads, maxMemory, workdir,
     return int(float(coverage))
 
 
-def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, Gid, workdir, report, logFilepath, trimmomatic_path):
+def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, Gid, workdir, report, logFilepath):
 	
 	os.system('echo "************************** TRIMMING WORKFLOW : START ************************** " >> '+ logFilepath)
 
@@ -609,7 +593,7 @@ def soft_trimming(reads1, reads2, adaptaters, nbThreads, maxMemory, phredscore, 
 
 	os.system('echo "Trimmomatic started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
-	command = "java -jar " + str(Maxmemoryg) + " " + trimmomatic_path + " PE -threads " + \
+	command = "trimmomatic " + str(Maxmemoryg) + " PE -threads " + \
 	str(nbThreads) + " -phred33 " + reads1 + " " + reads2 + " " + forward_paired + " " + \
 	forward_unpaired + " " + reverse_paired + " " + reverse_unpaired + \
 	" ILLUMINACLIP:" + adaptaters + ":2:" + str(phredscore) + ":15 " + \
@@ -775,8 +759,7 @@ def get_default_reference(genus, workdir, logFilepath, NASBIO1_path, reads1, rea
 		sys.exit(1)
 
 
-def commande_iVARCAll(genus, reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir, logFilepath, report, NASBIO1_path, \
-trimmomatic_path, GATK_path, picard_path):
+def commande_iVARCAll(genus, reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir, logFilepath, report, NASBIO1_path, GATK_path):
 
     os.system('echo "\n************************** iVARCall2 WORKFLOW : START **************************\n" >> '+ logFilepath)
 
@@ -790,9 +773,13 @@ trimmomatic_path, GATK_path, picard_path):
 
     cmd="iVARCall2 -ref " + reference + " -reads " + reads1 + " " + reads2 + \
         " -a " + adaptaters + " -o " + Gid + "_iVARCAll -T " + str(nbThreads) + " -m " + str(maxMemory) + \
-		" -TRIMJAR " + trimmomatic_path + " -GATKJAR " + GATK_path + " -PICARDJAR " + picard_path + \
+	" -GATKJAR " + str(GATK_path) + \
         " --removeDuplicates --indelRealigner --removeTmpFiles --onlyVCF" + " >> " + logFilepath + " 2>&1"
-    
+    #cmd="iVARCall2 -ref " + reference + " -reads " + reads1 + " " + reads2 + \
+    #    " -a " + adaptaters + " -o " + Gid + "_iVARCAll -T " + str(nbThreads) + " -m " + str(maxMemory) + \
+    #            " -TRIMJAR " + trimmomatic_path + " -GATKJAR " + GATK_path + " -PICARDJAR " + picard_path + \
+    #    " --removeDuplicates --indelRealigner --removeTmpFiles --onlyVCF" + " >> " + logFilepath + " 2>&1"
+
     logFile.write("\n" + cmd + "\n")
     logFile.close()
     
@@ -1081,7 +1068,7 @@ def Assembly(reads1,reads2,cwd,logFilepath,nbThreads): #Perform de novo assembly
 
 	os.system('echo "Assembly started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
-	cmd = "spades --careful " + \
+	cmd = "spades.py --careful " + \
 	" -1 " + reads1 + " " + \
 	" -2 " + reads2 + " " + \
 	" -o " + AssemblyDeNovopath + \
@@ -1119,7 +1106,7 @@ def Assembly_control(AssemblyDeNovo, referencepath, minContig, GFF, cwd, logFile
 	" -t " + str(nbThreads) + ' ' + \
 	" -m " + str(minContig) + " " +  \
 	" -G " + GFF + " " +  \
-	" --scaffolds " + \
+	" --split-scaffolds " + \
 	AssemblyDeNovo + \
 	" >> " + logFilepath + " 2>&1"
 
@@ -1626,7 +1613,25 @@ def main():
 		sys.exit(1)
 	
 	Arguments=parser.parse_args()	
-
+	
+	#itsmeludo 23/12/2018
+        
+        if not Arguments.medusa_path:
+                medusa_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","medusa.jar")
+        else:
+                medusa_path=Arguments.medusa_path
+        if not Arguments.medusa_scripts_path:
+                medusa_scripts_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","medusa_scripts")
+        else:
+                medusa_scripts_path=Arguments.medusa_scripts_path
+        ###fin modif
+	#itsmeludo 27/12/2018
+        if not Arguments.GATK_path:
+                gatk_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","GenomeAnalysisTK.jar")
+        else:
+                gatk_path=Arguments.GATK_path
+	###fin modif	
+    
 	print("Step 1/16 ---> Initialisation")
 
 	# Go to working directory gived by Arguments.workdir
@@ -1771,11 +1776,14 @@ def main():
 	#		    	iVARCall		    	 #
 	##########################################
 
-	print("Step 6/17 ---> iVARCall")
+	print("Step 6/17 ---> iVARCall2")
 
 	VCF_FILE = commande_iVARCAll(Arguments.genus, Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
 		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.NASBIO1_PATH, \
-		Arguments.trimmomatic_path, Arguments.GATK_path, Arguments.picard_path)
+		GATK_path=gatk_path)
+#	VCF_FILE = commande_iVARCAll(Arguments.genus, Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
+#                Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.NASBIO1_PATH, \
+#                Arguments.trimmomatic_path, Arguments.GATK_path, Arguments.picard_path)
 
 
 	##########################################
@@ -1784,7 +1792,7 @@ def main():
 
 	print("Step 7/17 ---> Trimming")
 	reads_trim =  soft_trimming(Arguments.reads1, Arguments.reads2, ADAPTATERS_FILE, Arguments.nbThreads, Arguments.maxMemory, \
-	Arguments.minPhredScore, GENOME_ID, cwd, REPORT_FILE, LOG_FILE, Arguments.trimmomatic_path)
+	Arguments.minPhredScore, GENOME_ID, cwd, REPORT_FILE, LOG_FILE)
 	
 	reads1_trim = reads_trim[0]
 	reads2_trim = reads_trim[1]

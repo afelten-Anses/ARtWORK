@@ -8,8 +8,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ARtWORK",
-    version="1.0.0",
-    author="Arnaud Felten, Kevin Durimel, Ludovic Mallet (pack)",
+    version="1.0.10",
+    author="Arnaud Felten, Kevin Durimel, Ludovic Mallet",
     author_email="arnaud.felten@anses.fr, ludovic.mallet@anses.fr",
     description="Assembly of Reads and Typing Workflow",
     long_description=long_description,
@@ -25,8 +25,6 @@ setuptools.setup(
              "src/ARtWORK_Assembler",
              "src/ARtWORK_lite",
              "src/MetARtWORK",
-             "src/bbmap",
-             "src/bbnorm",
              ],
     include_package_data=True,
     install_requires=['biopython>=1.68', 
@@ -36,7 +34,7 @@ setuptools.setup(
                       'bson',
                       "featmongo",
                       "pyunpack",
-                      "patoolib",
+                      "patool",
                       "networkx",
                       "numpy",
                       ],

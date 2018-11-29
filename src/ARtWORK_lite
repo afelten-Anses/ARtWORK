@@ -65,17 +65,14 @@ def get_parser():
 						type=int, default=80, help='minimum percent of total scaffold length \
 						mapped on reference, used to detect contaminants (default:80)')
 
-        parser.add_argument('-medusa', action="store", dest='medusa_path',
-                                                type=str, help='medusa jar path \
-                                                (default:$CONDA_PREFIX/bin/medusa.jar)')           
-#$CONDA_PREFIX/bin/medusa.jar
-        parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path',
-                                                type=str, help='medusa scripts path \
-                                                (default:$CONDA_PREFIX/bin/medusa_scripts/)')      
-#default="$CONDA_PREFIX/bin/medusa_scripts/"
 	parser.add_argument('-d', action="store", dest='max_len_diff', 
 						type=int, default=30, help='maximum percent of length difference \
 						between assembly and reference (default:20)')
+	parser.add_argument('-medusa', action="store", dest='medusa_path',type=str, help='medusa jar path ')
+
+        parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', type=str, help='medusa scripts path')
+
+        parser.add_argument('-GATK', action="store", dest='GATK_path',type=str, help='GATK jar path')
 
 	return parser
 
@@ -451,7 +448,7 @@ def Fastqc(reads1, reads2, adaptators, outputName, nbThreads, workdir, logFilepa
 	return listResult
 
 
-def commande_iVARCAll(reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir,logFilepath, report, reference):
+def commande_iVARCAll(reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, workdir,logFilepath, report, reference,GATK_path):
 
     os.system('echo "\n************************** iVARCall2 WORKFLOW : START **************************\n" >> '+ logFilepath)
 
@@ -464,6 +461,7 @@ def commande_iVARCAll(reads1, reads2, adaptaters, nbThreads, maxMemory, Gid, wor
 
     cmd="iVARCall2 -ref " + reference + " -reads " + reads1 + " " + reads2 + \
         " -a " + adaptaters + " -o " + Gid + "_iVARCAll -T " + str(nbThreads) + " -m " + str(maxMemory) + \
+        " -GATKJAR " + str(GATK_path) + \
         " --removeDuplicates --indelRealigner --removeTmpFiles --onlyVCF" + " >> " + logFilepath + " 2>&1"
     
     logFile.write("\n" + cmd + "\n")
@@ -591,7 +589,7 @@ def Assembly(reads1,reads2,cwd,logFilepath,nbThreads): #Perform de novo assembly
 
 	os.system('echo "Assembly started at : " >> '+ logFilepath + " 2>&1 | date >> " + logFilepath)
 
-	cmd = "spades --careful " + \
+	cmd = "spades.py --careful " + \
 	" -1 " + reads1 + " " + \
 	" -2 " + reads2 + " " + \
 	" -o " + AssemblyDeNovopath + \
@@ -628,7 +626,7 @@ def Assembly_control(AssemblyDeNovo, referencepath, minContig, cwd, logFilepath,
 	" -o " + quast_html_file + \
 	" -t " + str(nbThreads) + ' ' + \
 	" -m " + str(minContig) + " " +  \
-	" --scaffolds " + \
+	" --split-scaffolds " + \
 	AssemblyDeNovo + \
 	" >> " + logFilepath + " 2>&1"
 
@@ -934,11 +932,24 @@ def main():
 	
 
 	#itsmeludo 23/12/2018
-	if Arguments.medusa_path =="":
+	if not Arguments.medusa_path:
 		medusa_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","medusa.jar")
-	if Arguments.medusa_scripts_path =="":
-		medusa_scripts_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","medusa.jar")
+	else:
+		medusa_path=Arguments.medusa_path
+	if not Arguments.medusa_scripts_path:
+		medusa_scripts_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","medusa_scripts")
+	else:
+		medusa_scripts_path=Arguments.medusa_scripts_path
 	###fin modif
+        #itsmeludo 27/12/2018
+	#if Arguments.GATK_path =="":
+	if not Arguments.GATK_path:
+                gatk_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","GenomeAnalysisTK.jar")
+        else:
+                gatk_path=Arguments.GATK_path
+	#gatk_path=os.path.join(os.environ['CONDA_PREFIX'],"bin","GenomeAnalysisTK.jar")
+	###fin modif
+
 
 	print("Step 1/16 ---> Initialisation")
 
@@ -1071,7 +1082,7 @@ def main():
 	print("Step 6/16 ---> iVARCall")
 
 	VCF_FILE = commande_iVARCAll(Arguments.reads1,Arguments.reads2, ADAPTATERS_FILE,\
-		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.RefVariant)
+		Arguments.nbThreads, Arguments.maxMemory, GENOME_ID,cwd, LOG_FILE, REPORT_FILE, Arguments.RefVariant,gatk_path)
 
 
 	##########################################
