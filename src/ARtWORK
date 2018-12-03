@@ -71,6 +71,8 @@ def get_parser():
 
 	parser.add_argument('-Mp', action="store", dest='MongoPassword', 
 						type=str, required=True, help='MongoDb password (REQUIRED)')
+	parser.add_argument('-Ms', action="store", dest='MongoServer',
+                                                type=str, default="SAS-PP-LSCALC1", help='Server name or IP for GamerDB host server')
 
 	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
 						type=str, default="~/NASBIO1", help='NASBIO1/bio path (default:~/NASBIO1)')
@@ -238,11 +240,11 @@ class sample(object) :
 		return reads	
 
 
-	def insertMongo(self, MongoUser, MongoPassword):
+	def insertMongo(self, MongoUser, MongoPassword, MongoServer):
 		
 		#client = MongoClient('localhost', username=MongoUser, \
 		#	password=MongoPassword, authSource="GAMeRdb", authMechanism='SCRAM-SHA-1')
-		uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@localhost/GAMeRdb"
+		uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@"+MongoServer+"/GAMeRdb"
 		client = MongoClient(uri)
 		db = client.GAMeRdb
 		genomes = db.GENOME
@@ -382,14 +384,14 @@ def check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, logFilepath):
 	logFile.close()
 
 
-def check_MongoDB_exist(GENOME_ID, genus, logFilepath, MongoUser, MongoPassword):
+def check_MongoDB_exist(GENOME_ID, genus, logFilepath, MongoUser, MongoPassword, MongoServer):
 	
 	logFile = open(logFilepath, "a")
 	logFile.write("Check if genome already id exists in  database...")
 
 	#client = MongoClient('localhost', username=MongoUser, \
 	#		password=MongoPassword, authSource="GAMeRdb", authMechanism='SCRAM-SHA-1')
-	uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@localhost/GAMeRdb"
+	uri = "mongodb://" + MongoUser + ":" + MongoPassword + "@"+MongoServer+"/GAMeRdb"
 	client = MongoClient(uri)
 	db = client.GAMeRdb
 	genomes = db.GENOME
@@ -1662,7 +1664,7 @@ def main():
 
 	# Check GENOME_ID
 	check_finalDirectory_exist(FINAL_OUTPUT_DIRECTORY, LOG_FILE)
-	check_MongoDB_exist(GENOME_ID, Arguments.genus, LOG_FILE, Arguments.MongoUser, Arguments.MongoPassword)
+	check_MongoDB_exist(GENOME_ID, Arguments.genus, LOG_FILE, Arguments.MongoUser, Arguments.MongoPassword, Arguments.MongoServer)
 
 	# Make final directory 
 	os.makedirs(FINAL_OUTPUT_DIRECTORY)
@@ -1918,7 +1920,7 @@ def main():
 		dico_Suplinfos['BreadthCoverage'])
 
 	sampleObjet.moveFiles(FINAL_OUTPUT_DIRECTORY)
-	sampleObjet.insertMongo(Arguments.MongoUser, Arguments.MongoPassword)
+	sampleObjet.insertMongo(Arguments.MongoUser, Arguments.MongoPassword, Arguments.MongoServer)
 
 
 	##########################################

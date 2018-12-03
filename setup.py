@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ARtWORK",
-    version="1.0.10",
+    version="1.0.11",
     author="Arnaud Felten, Kevin Durimel, Ludovic Mallet",
     author_email="arnaud.felten@anses.fr, ludovic.mallet@anses.fr",
     description="Assembly of Reads and Typing Workflow",
@@ -30,7 +30,7 @@ setuptools.setup(
     install_requires=['biopython>=1.68', 
                       'lxml',
                       'requests',
-                      'pymongo',
+                      'pymongo>=3.7.2',
                       'bson',
                       "featmongo",
                       "pyunpack",
