@@ -1,0 +1,62 @@
+#!/bin/bash
+#SBATCH -p Alerte_rouge		   # fichier où sera écrit la sortie standart STDOUT
+#SBATCH -o %x.%N.%j.out            # fichier où sera écrit la sortie standart STDOUT
+#SBATCH -e %x.%N.%j.err            # fichier où sera écrit la sortie d'erreur STDERR
+
+
+# sbatch launch.sh 08CEB127Btk_HD73.fasta
+
+source /global/conda/bin/activate
+conda activate artwork
+
+#echo $1
+#echo $2
+
+nas=$1
+cpu=$2
+
+Genus=$3
+species=$4
+ID=$5
+project=$6
+supplier=$7
+center=$8
+tech=$9
+
+R1=$(find /mnt/nasbio1/PROJETS/$Genus/$project/data/ -name ${ID}*_R1.fastq*)
+R2=$(find /mnt/nasbio1/PROJETS/$Genus/$project/data/ -name ${ID}*_R2.fastq*)
+echo $R1
+echo $R2
+
+
+#mkdir -p data/${ID}/
+mkdir -p compute/${ID}
+
+#cp /mnt/nasbio1/PROJETS/Bacillus/Bt_TIAC/data/${ID}*.fastq.gz data/${ID}/
+#cd  data/${ID}
+#gunzip *
+#cd -
+
+cd compute/${ID}
+
+
+cmd="ARtWORK \
+-1 $R1 \
+-2 $R2 \
+-g $Genus \
+-s $species \
+-Mu Manager \
+-Mp reganaM \
+-n $nas \
+-T $cpu -m 64000 \
+--supplier $supplier \
+--project $project \
+--center $center \
+--technology $tech
+"
+
+echo $cmd
+eval $cmd
+cd -
+
+
