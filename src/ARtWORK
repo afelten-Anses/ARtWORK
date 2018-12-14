@@ -1383,7 +1383,7 @@ def rename_contig(fasta_file, genome_id, logFilepath):
 			j = 0
 			for n in line :
 
-				if j%70==0 :
+				if j%70==0 and j>0 :
 					rename_fastaFile.write('\n')
 			
 				rename_fastaFile.write(n)
