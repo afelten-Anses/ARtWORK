@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="ARtWORK",
-    version="1.0.11",
+    version="1.0.14",
     author="Arnaud Felten, Kevin Durimel, Ludovic Mallet",
     author_email="arnaud.felten@anses.fr, ludovic.mallet@anses.fr",
     description="Assembly of Reads and Typing Workflow",

@@ -23,8 +23,11 @@ def get_parser():
 	parser.add_argument('-Mp', action="store", dest='MongoPassword', 
 						type=str, required=True, help='MongoDb password (REQUIRED)')
 
+	parser.add_argument('-Ms', action="store", dest='MongoServer',
+                                                type=str, default="SAS-PP-LSCALC1", help='Server name or IP for GamerDB host server')
+
 	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
-						type=str, default="~/NASBIO1", help='NASBIO1 path (default:~/NASBIO1)')
+						type=str, default="/mnt/nasbio1", help='NASBIO1 path (default:~/NASBIO1)')
 
 	parser.add_argument('-minCov', action="store", dest='minCov',
 						type=int, default=30, help='minimum coverage required for workflow (default:30)')
@@ -43,12 +46,12 @@ def get_parser():
 
 	parser.add_argument('-m', action="store", dest='maxMemory', 
 						type=int, default=64000, help='max memory to use in Mb (default:64000)')
-	
-	parser.add_argument('-medusa', action="store", dest='medusa_path',type=str, help='medusa jar path ')
-	
-	parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', type=str, help='medusa scripts path')
-	
-	parser.add_argument('-GATK', action="store", dest='GATK_path',type=str, default='GenomeAnalysisTK.jar', help='GATK jar path')
+
+        parser.add_argument('-medusa', action="store", dest='medusa_path', type=str, help='medusa jar path ')
+
+        parser.add_argument('-medusa_scripts', action="store", dest='medusa_scripts_path', type=str, help='medusa scripts path')
+
+        parser.add_argument('-GATK', action="store", dest='GATK_path',type=str, help='GATK jar path')
 
 
 #	parser.add_argument('-trimmomatic', action="store", dest='trimmomatic_path', 
