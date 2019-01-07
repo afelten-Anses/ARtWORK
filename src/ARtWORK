@@ -198,7 +198,7 @@ class sample(object) :
 			self.antigenic_profile = MLST_id[1]
 
 		elif self.genus == "Listeria" :
-			self.CC = MLST_id[0] 	
+			self.CC = MLST_id 	
 
 
 	def moveFiles(self, FINAL_OUTPUT_DIRECTORY):
