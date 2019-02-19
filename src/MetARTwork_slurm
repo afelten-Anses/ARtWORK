@@ -13,10 +13,10 @@ def get_parser():
                      type=str, required=True, help="ARTwork TSV file (REQUIRED)")
     
     parser.add_argument('-n', action="store", dest='NASBIO1_PATH', 
-                        type=str, default='/mnt/NAS/NASBIO1/', help='NASBIO1 path (default:/mnt/NAS/NASBIO1/)')
+                        type=str, default='/global/bio/', help='NASBIO1 path (default:/global/bio/)')
 
     parser.add_argument('-T', action="store", dest='nbThreads', 
-                        type=str, default='40', help='Number of threads to use (default:40)')
+                        type=str, default='48', help='Number of threads to use (default:48)')
     
     parser.add_argument('--alerte', dest='alerte', action='store_true', 
                         help='Use Alerte_rouge partition', default=False)
@@ -37,9 +37,12 @@ def main():
     Arguments=parser.parse_args()
     
     if Arguments.alerte:
-        script = " /global/conda/bin/ARtWORK_slurm_alerte "
+        script = " ARtWORK_slurm_alerte "
+        #script = " /global/conda/bin/ARtWORK_slurm_alerte "
     else:
-        script = " /global/conda/bin/ARtWORK_slurm "
+        #script = " /global/conda/bin/ARtWORK_slurm "
+	script = " ARtWORK_slurm_research "
+	#script = " /global/conda/bin/ARtWORK_slurm_research "
 
     tab_file = Arguments.TSV
     tab=open(tab_file, 'r')
@@ -55,8 +58,9 @@ def main():
             id = line[2]
             cmd = "sbatch  --cpus-per-task=" + Arguments.nbThreads + " -J \"ARtWORK_" + id + "\"" + script + \
             Arguments.NASBIO1_PATH + " " + Arguments.nbThreads + " " + line[0] + " " + line[1] + " \"" + line[2] + "\" " + line[3] + " " + \
-            line[4] + " " + line[5] + " " + line[6]
+            line[4] + " " + line[5] + " " + line[6] + " " + line[7] + " " + line[8]
             print(cmd)
+
             os.system(cmd)
                 
 if __name__ == "__main__":

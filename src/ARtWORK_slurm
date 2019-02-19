@@ -22,9 +22,18 @@ project=$6
 supplier=$7
 center=$8
 tech=$9
+plate=$10
+seq=$11
 
-R1=$(find /mnt/nasbio1/PROJETS/$Genus/$project/data/ -name ${ID}*_R1.fastq*)
-R2=$(find /mnt/nasbio1/PROJETS/$Genus/$project/data/ -name ${ID}*_R2.fastq*)
+
+#R1=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}*_R1.fastq*)
+#R2=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}*_R2.fastq*)
+#R1=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}_R1.fastq*)
+#R2=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}_R2.fastq*)
+#R1=$(find $nas/sequencage/reads/$seq/$plate/ -name ${ID}*R1.fastq*)
+#R2=$(find $nas/sequencage/reads/$seq/$plate/ -name ${ID}*R2.fastq*)
+R1=$(ls $nas/sequencage/reads/$seq/$plate/${ID}{_,.}R1.fastq.gz)
+R2=$(ls $nas/sequencage/reads/$seq/$plate/${ID}{_,.}R2.fastq.gz)
 echo $R1
 echo $R2
 

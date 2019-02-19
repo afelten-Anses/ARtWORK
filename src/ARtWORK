@@ -72,10 +72,11 @@ def get_parser():
 	parser.add_argument('-Mp', action="store", dest='MongoPassword', 
 						type=str, required=True, help='MongoDb password (REQUIRED)')
 	parser.add_argument('-Ms', action="store", dest='MongoServer',
-                                                type=str, default="SAS-PP-LSCALC1", help='Server name or IP for GamerDB host server')
+                                                type=str, default="SAS-VP-LSDB1", help='Server name or IP for GamerDB host server')
+#                                                type=str, default="SAS-PP-LSCALC1", help='Server name or IP for GamerDB host server')
 
 	parser.add_argument('-n', action="store", dest='NASBIO1_PATH',
-						type=str, default="/mnt/nasbio1", help='NASBIO1/bio path (default:~/NASBIO1)')
+						type=str, default="/global/bio", help='NASBIO1/bio path (default:~/NASBIO1)')
 
 	parser.add_argument('-minCov', action="store", dest='minCov',
 						type=int, default=30, help='minimum coverage required for workflow (default:30)')
