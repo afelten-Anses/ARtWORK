@@ -905,7 +905,8 @@ def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus, NASBIO1_path, 
 	
 	os.system('echo "\n************************** MLST WORKFLOW : START **************************\n" >> '+ logFilepath)
 
-	command = "mlst --quiet " + " --threads=" + str(nbThreads) + \
+	#command = "mlst --quiet " + " --threads=" + str(nbThreads) + \
+	command = "mlst --quiet " + " --threads=4" + \
 	" " + contigs + " > MLST_result.tmp"
 
 	os.system(command)
