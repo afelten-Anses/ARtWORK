@@ -254,27 +254,27 @@ class sample(object) :
 			"SampleID":self.id,
 			"Supplier":self.supplier,
 			"Project":self.projetID,
-			"Report":self.report,
+			"Report":"DATA/"+self.report,
 			"Reads":{
-				"FASTQ_pair1":self.reads1,
-				"FASTQ_pair2":self.reads2,
+				"FASTQ_pair1":"DATA/"+self.reads1,
+				"FASTQ_pair2":"DATA/"+self.reads2,
 				"NbReads":self.nbReads,
 				"ReadsLength":self.readsLen,
-				"FASTQC_pair1":self.reads1QC+"/fastqc_report.html",
-				"FASTQC_pair2":self.reads2QC+"/fastqc_report.html",
+				"FASTQC_pair1":"DATA/"+self.reads1QC+"/fastqc_report.html",
+				"FASTQC_pair2":"DATA/"+self.reads2QC+"/fastqc_report.html",
 				"Center":self.center,
 				"Technology":self.technology,
-				"VCF":self.VCF,
+				"VCF":"DATA/"+self.VCF,
 				"RefSNP":self.RefSNP,
 				"BreadthCoverage":self.BreadthCoverage
 			},
 			"Genome":{
-				"Assembly":self.assembly,
-				"Contigs":self.contigs,
-				"QUAST":self.QUAST+"/report.html",
-				"GBK":self.GBK,
-				"GFF":self.GFF,
-				"Sketch":self.sketch,
+				"Assembly":"DATA/"+self.assembly,
+				"Contigs":"DATA/"+self.contigs,
+				"QUAST":"DATA/"+self.QUAST+"/report.html",
+				"GBK":"DATA/"+self.GBK,
+				"GFF":"DATA/"+self.GFF,
+				"Sketch":"DATA/"+self.sketch,
 				"NbContigs":self.NbContigs,
 				"TotalLength":self.TotalLength,
 				"LargestContig":self.LargestContig,
@@ -687,30 +687,30 @@ def get_default_reference(genus, workdir, logFilepath, NASBIO1_path, reads1, rea
 		#retrieving reference filename
 		reference_filename = "Typhimurium_LT2_AE006468.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Salmonella/Typhimurium_LT2_AE006468.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
+		os.system("unzip -o -j " + NASBIO1_path + "/data/REFERENCES/Salmonella/Typhimurium_LT2_AE006468.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
 
 	elif(genus == "Listeria"):
 		#retrieving reference filename
 		reference_filename = "Listeria_monocytogenes_strain_EGD-e.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Listeria/EGD-e.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
+		os.system("unzip -o -j " + NASBIO1_path + "/data/REFERENCES/Listeria/EGD-e.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
 
 	elif(genus == "Staphylococcus"):
 		#retrieving reference filename
 		reference_filename = "Staphylococcus_aureus_NC_007795.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
+		os.system("unzip -o -j " + NASBIO1_path + "/data/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes
 	
 	elif(genus == "Clostridium"):
 		#retrieving reference filename
 		reference_filename = "CP000246.fasta" #need to be updated if reference path changes
 		#unzip in current working directory with -d and junk paths with -j
-		os.system("unzip -o -j " + NASBIO1_path + "/DATA/REFERENCES/Clostridium/CP000246.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes	
+		os.system("unzip -o -j " + NASBIO1_path + "/data/REFERENCES/Clostridium/CP000246.zip -d " + workdir + "/reference_iVARCAll") #need to be updated if reference path changes	
 
 	elif(genus == "Bacillus"):
 		#retrieving reference filename
 		os.mkdir(workdir + "/genomes_Bacillus")
-		os.system("cp " + NASBIO1_path + "/DATA/REFERENCES/Bacillus/*zip " + workdir + "/genomes_Bacillus/.")
+		os.system("cp " + NASBIO1_path + "/data/REFERENCES/Bacillus/*zip " + workdir + "/genomes_Bacillus/.")
 		os.system("unzip \'" + workdir + "/genomes_Bacillus/*.zip\' \'*.fasta\' -d genomes_Bacillus/")
 		os.system("rm " + workdir + "/genomes_Bacillus/*_prot.fasta " + workdir + "/genomes_Bacillus/*zip")
 
@@ -968,7 +968,7 @@ def MSLT_analysis(contigs, nbThreads, logFilepath, report, genus, NASBIO1_path, 
 
 def get_CC_from_ST_Listeria(ST, NASBIO1_path):
 
-	tabFile = open(NASBIO1_path + "/DATA/MLST_DATA/Listeria/profile.txt",'r')
+	tabFile = open(NASBIO1_path + "/data/MLST_DATA/Listeria/profile.txt",'r')
 	lines = tabFile.readlines()
 	tabFile.close()
 
@@ -983,7 +983,7 @@ def get_CC_from_ST_Listeria(ST, NASBIO1_path):
 ''' DEPRECIATED
 def get_serovar_from_ST_Salmonella(ST, NASBIO1_path):
 
-	tabFile = open(NASBIO1_path + "/DATA/MLST_DATA/Salmonella/mlst_lookup.txt",'r')
+	tabFile = open(NASBIO1_path + "/data/MLST_DATA/Salmonella/mlst_lookup.txt",'r')
 	lines = tabFile.readlines()
 	tabFile.close()
 
@@ -1269,7 +1269,7 @@ def find_scaffoldingRef_with_Mash(assembly, genus, report, logFilepath, NASBIO1_
 	os.system("mkdir mash_genome_db")
 	os.mkdir("reference_scaffolding")
 	os.mkdir("reference_gff")
-	os.system("cp " + NASBIO1_path + "/DATA/REFERENCES/" + genus + "/*zip mash_genome_db/.")
+	os.system("cp " + NASBIO1_path + "/data/REFERENCES/" + genus + "/*zip mash_genome_db/.")
 	os.system("unzip \'mash_genome_db/*.zip\' \'*.fasta\' -d mash_genome_db/")
 	os.system("unzip \'mash_genome_db/*.zip\' \'*.gff3\' -d reference_gff/")
 	os.system("rm mash_genome_db/*zip mash_genome_db/*_prot.fasta")
@@ -1399,11 +1399,11 @@ def rename_contig(fasta_file, genome_id, logFilepath):
 	return rename_fastaFile_name	
 
 
-def annotation(fasta_file, genome_id, genus, nbThreads, logFilepath):
+def annotation(fasta_file, genome_id, genus, nbThreads, logFilepath, arguments):
 
 	os.system('echo "\n************************** GENOME ANNOTATION : START **************************\n" >> '+ logFilepath)
 
-	cmd = "prokka --fast --genus " + genus + " --prefix annotation" + \
+	cmd = "prokka  --addgenes --addmrna --centre "+arguments.center +" --genus " + genus + " --prefix annotation" + \
 	" -cpus " + str(nbThreads) + " " + fasta_file
 	cmd = cmd + " >> " + logFilepath + " 2>&1"
 
@@ -1650,8 +1650,8 @@ def main():
 	REPORT_FILE = GENOME_ID + "_report.txt"
 	if Arguments.NASBIO1_PATH[-1] == '/' :
 		Arguments.NASBIO1_PATH = Arguments.NASBIO1_PATH[0:-1]
-	FINAL_OUTPUT_DIRECTORY = Arguments.NASBIO1_PATH + "/DATA/GAMeR_DB/" + Arguments.genus.upper() + '/' + GENOME_ID
-	ADAPTATERS_FILE = Arguments.NASBIO1_PATH + "/DATA/all_known_iontorrent-Illumina.fa"
+	FINAL_OUTPUT_DIRECTORY = Arguments.NASBIO1_PATH + "/data/GAMeR_DB/" + Arguments.genus.upper() + '/' + GENOME_ID
+	ADAPTATERS_FILE = Arguments.NASBIO1_PATH + "/data/all_known_iontorrent-Illumina.fa"
 
 	#Retrieve Python command
 	command=""
@@ -1898,7 +1898,7 @@ def main():
 
 	print("Step 15/17 ---> Genome annotation")
 
-	GBK, GFF = annotation(ASSEMBLY, GENOME_ID, Arguments.genus, Arguments.nbThreads, LOG_FILE)
+	GBK, GFF = annotation(ASSEMBLY, GENOME_ID, Arguments.genus, Arguments.nbThreads, LOG_FILE, Arguments)
 
 
 	##########################################
