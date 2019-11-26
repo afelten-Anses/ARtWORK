@@ -1,13 +1,15 @@
 #!/bin/bash
-#SBATCH -p Alerte_rouge                    # fichier où sera écrit la sortie standart STDOUT
 #SBATCH -o %x.%N.%j.out            # fichier où sera écrit la sortie standart STDOUT
 #SBATCH -e %x.%N.%j.err            # fichier où sera écrit la sortie d'erreur STDERR
 
 
 # sbatch launch.sh 08CEB127Btk_HD73.fasta
-
-source /global/conda/bin/activate
+. "/global/conda/etc/profile.d/conda.sh"
+conda activate base
+#source /global/conda/bin/activate
 conda activate artwork
+
+
 
 #echo $1
 #echo $2
@@ -22,18 +24,17 @@ project=$6
 supplier=$7
 center=$8
 tech=$9
-plate=$11
-seq=$10
-
+plate=${10}
+seq=${11}
 
 #R1=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}*_R1.fastq*)
 #R2=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}*_R2.fastq*)
 #R1=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}_R1.fastq*)
 #R2=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}_R2.fastq*)
-#R1=$(find $nas/sequencage/reads/$seq/$plate/ -name ${ID}*R1.fastq*)
-#R2=$(find $nas/sequencage/reads/$seq/$plate/ -name ${ID}*R2.fastq*)
-R1=$(ls $nas/sequencage/reads/$seq/$plate/${ID}{_,.}R1.fastq.gz)
-R2=$(ls $nas/sequencage/reads/$seq/$plate/${ID}{_,.}R2.fastq.gz)
+#R1=$(find $nas/sequencage/reads/$seq/$plate/ -name ${ID}_R1.fastq*)
+#R2=$(find $nas/sequencage/reads/$seq/$plate/ -name ${ID}_R2.fastq*)
+R1=$(ls $nas/sequencage/reads/$seq/$plate/${ID}_R1.fastq.gz)
+R2=$(ls $nas/sequencage/reads/$seq/$plate/${ID}_R2.fastq.gz)
 
 echo $R1
 echo $R2

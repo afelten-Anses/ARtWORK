@@ -16,7 +16,7 @@ import smtplib
 from Bio import SeqIO
 import patoolib
 import re
-
+from os.path import splitext
 
 __doc__="""
 @requires: BWA
@@ -233,8 +233,7 @@ class sample(object) :
 
 
 	def compressReads(self, reads):	
-
-		if reads.split('.')[-1] != "gz" :
+		if os.path.basename(reads).split('.')[-1] != "gz" :
 			os.system("pigz " + reads)
 			reads = reads + ".gz"
 
@@ -423,8 +422,9 @@ def uncompress_in_workdir(CompressedRead,logFilepath,workdir):
 	#File found
 	if(os.path.exists(CompressedRead)):
 
-		reads_filename = '.'.join(CompressedRead.split('.')[0:2])
-		reads_filename = reads_filename.split('/')[-1]
+#		reads_filename = '.'.join(CompressedRead.split('.')[0:2])
+		reads_filename, file_extension = os.path.splitext(os.path.basename(CompressedRead))
+#		reads_filename = reads_filename.split('/')[-1]
 		reads_filepath = workdir + '/' + reads_filename
 
 	#File not found
@@ -1055,7 +1055,8 @@ def get_serovar_from_ST_Salmonella(contigs,logFilepath, report, cwd):
 	else :
 		predictedAntigenicProfile = lines[4].rstrip().split('\t')[1]	
 				
-	shutil.rmtree(output)
+	#shutil.rmtree(output)
+	os.system("rm -r " + output)
 
 	report_file = open(report, 'a')
 	report_file.write("\nPREDICTED SEROVAR : " + predictedSerovar + "\n")
@@ -1208,7 +1209,7 @@ def get_scaffolding_reference(genus, MLST_id,logFilepath, report):
 			reference = referenceZIP	
 
 		else :
-			reference = "/mnt/NAS/NASBIO1/DATA/REFERENCES/Salmonella/Typhimurium_LT2_AE006468.zip"
+			reference = "/mnt/NAS/NASBIO1/data/REFERENCES/Salmonella/Typhimurium_LT2_AE006468.zip"
 
 	if(genus == "Listeria"):
 		MLST_id = MLST_id[2:]
@@ -1221,7 +1222,7 @@ def get_scaffolding_reference(genus, MLST_id,logFilepath, report):
 			reference = referenceZIP	
 
 		else :
-			reference = "/mnt/NAS/NASBIO1/DATA/REFERENCES/Listeria/EGD-e.zip"
+			reference = "/mnt/NAS/NASBIO1/data/REFERENCES/Listeria/EGD-e.zip"
 
 
 	if(genus == "Staphylococcus"):
@@ -1235,7 +1236,7 @@ def get_scaffolding_reference(genus, MLST_id,logFilepath, report):
 			reference = referenceZIP
 
 		else :
-			reference = "/mnt/NAS/NASBIO1/DATA/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip"	
+			reference = "/mnt/NAS/NASBIO1/data/REFERENCES/Staphylococcus/Staphylococcus_aureus_NC_007795.zip"	
 
 
 	os.system("unzip " + reference + ' -d reference_scaffolding/. "*.fasta"')		
@@ -1758,7 +1759,7 @@ def main():
 	##########################################
 	
 	print("Step 4/17 ---> normalization")
-	if(coverage > Arguments.targetCov):
+	if(coverage > Arguments.targetCov and  Arguments.targetCov!=0):
 		reads1, reads2 = normalization(Arguments.reads1, Arguments.reads2, Arguments.targetCov, Arguments.nbThreads, GENOME_ID, LOG_FILE, REPORT_FILE)
 		os.system("mv " + reads1 + " " + Arguments.reads1)
 		os.system("mv " + reads2 + " " + Arguments.reads2)

@@ -16,7 +16,7 @@ def get_parser():
                         type=str, default='/global/bio/', help='NASBIO1 path (default:/global/bio/)')
 
     parser.add_argument('-T', action="store", dest='nbThreads', 
-                        type=str, default='48', help='Number of threads to use (default:48)')
+                        type=str, default='48', help='Number of threads to use (default:40)')
     
     parser.add_argument('--alerte', dest='alerte', action='store_true', 
                         help='Use Alerte_rouge partition', default=False)
@@ -28,7 +28,7 @@ def get_parser():
 def main():
     
     parser=get_parser()
-
+    dependencies=[]
     #print parser.help if no arguments
     if len(sys.argv)==1:
         parser.print_help()
@@ -38,11 +38,9 @@ def main():
     
     if Arguments.alerte:
         script = " ARtWORK_slurm_alerte "
-        #script = " /global/conda/bin/ARtWORK_slurm_alerte "
     else:
         #script = " /global/conda/bin/ARtWORK_slurm "
-	script = " ARtWORK_slurm_research "
-	#script = " /global/conda/bin/ARtWORK_slurm_research "
+	script = " ARtWORK_slurm "
 
     tab_file = Arguments.TSV
     tab=open(tab_file, 'r')
@@ -56,13 +54,18 @@ def main():
             line = line.rstrip()
             line = line.split('\t')
             id = line[2]
-            cmd = "sbatch  --cpus-per-task=" + Arguments.nbThreads + " -J \"ARtWORK_" + id + "\"" + script + \
+            cmd = "sbatch --parsable --cpus-per-task=" + Arguments.nbThreads + " -J \"ARtWORK_" + id + "\"" + script + \
             Arguments.NASBIO1_PATH + " " + Arguments.nbThreads + " " + line[0] + " " + line[1] + " \"" + line[2] + "\" " + line[3] + " " + \
             line[4] + " " + line[5] + " " + line[6] + " " + line[7] + " " + line[8]
             print(cmd)
 
-            os.system(cmd)
-                
+            #os.system(cmd)
+            slurm_id = str(subprocess.check_output("".join(cmd), shell=True))
+            dependencies.append(slurm_id)
+
+    cmd = "sbatch --parsable " + str(" --dependency=afterok:")+ ":".join(dependencies) + " AFTERwork.sh" # add here the command for ConFinder, etc.
+    #cmd = "sbatch --parsable --cpus-per-task=" + Arguments.nbThreads + " "+ str(" --dependency=afterok:")+ ":".join(dependencies) + " AFTERwork.sh" # add here the command for ConFinder, etc.
+    os.system(cmd)
 if __name__ == "__main__":
 	main()					
                 

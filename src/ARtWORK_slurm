@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -p Prod		           # fichier où sera écrit la sortie standart STDOUT
+#SBATCH -p Production		           # fichier où sera écrit la sortie standart STDOUT
 #SBATCH -o %x.%N.%j.out            # fichier où sera écrit la sortie standart STDOUT
 #SBATCH -e %x.%N.%j.err            # fichier où sera écrit la sortie d'erreur STDERR
 
@@ -22,8 +22,8 @@ project=$6
 supplier=$7
 center=$8
 tech=$9
-plate=$10
-seq=$11
+plate=$11
+seq=$10
 
 
 #R1=$(find $nas/PROJETS/$Genus/$project/data/ -name ${ID}*_R1.fastq*)
