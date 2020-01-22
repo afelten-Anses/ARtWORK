@@ -73,6 +73,9 @@ def detect_SequencingTechnology(reads_filepath, id, techno):
 				
 			elif id in line or line[0:4] == "@ERR":
 				return techno
+
+			elif id in line or line[0:4] == "@SRR":
+                                return techno
 			
 			elif line[0:6] == "@HWI-M" or line[0:2] == "@M":
 				return 'MiSeq'

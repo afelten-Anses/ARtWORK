@@ -1,0 +1,30 @@
+#!/bin/bash
+#### Check IDs of samples before to submit to GAMeR ####
+# input txt file with IDs in the first colomns as asgument of the IDcheck bash script
+
+# if the first argument ($1) is empty (z) or (||) is not (!) a existing file (-f) 
+if [ -z $1 ] || [ ! -f $1 ]; then
+# print USAGE
+	echo "USAGE IDcheck IDfile > output"
+# pass to the next line if there is no argument
+	exit
+# end of if
+fi
+
+# replace multiple space (\s+) by an @ (\@) overwriting (i) and accepting regular expressions (r)
+sed -ri "s@\s+@\@@g" $1
+
+# for all lines (i) in the file IDsamples (cat IDsamples) interpreting all the block (``)
+for i in `cat $1`; do
+# list lines in terminal (echo) whithout hard return (-n), adding tab before output (\t) and specifying input file name ($1)
+	echo -n $i "\t";
+# if IDs in terminal (echo) with accepted charaters (-vxP "[a-zA-Z0-9_]+"): grep nagative (-v), the whole line (x), accept regular expressions (P), between one and 16 characters {1,16}
+	if [ `echo $i | grep -vxP "[a-zA-Z0-9_]{1,16}"` ]; then
+# output "no"
+		echo "no";
+# output "ok"
+	else echo "ok"
+# end of if
+	fi;
+# end of for
+done

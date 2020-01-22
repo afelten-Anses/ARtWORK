@@ -5,6 +5,8 @@
 #SBATCH -e %x.%N.%j.err            # fichier où sera écrit la sortie d'erreur STDERR
 
 
+source /global/conda/bin/activate
+conda activate
 conda activate confindr
 python contamDB.py -Mu Manager -Mp reganaM
 
