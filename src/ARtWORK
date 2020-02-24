@@ -1044,8 +1044,11 @@ def get_serovar_from_ST_Salmonella(contigs,logFilepath, report, cwd):
 	#Parse SeqSero output
 	SeqSero_file = open(output + "/Seqsero_result.txt", 'r')
 	lines = SeqSero_file.readlines()
+	line_serovar = 5
+	if "Sdf prediction:" in lines[5] :
+		line_serovar = 6
 	try:
-		predictedSerovar = lines[5].rstrip().split('\t')[1]
+		predictedSerovar = lines[line_serovar].rstrip().split('\t')[1]
 		predictedSerovar = re.sub('\(.*','',predictedSerovar)
 		predictedSerovar = predictedSerovar.replace('*','')
 		if predictedSerovar == "potential monophasic variant of Typhimurium":
